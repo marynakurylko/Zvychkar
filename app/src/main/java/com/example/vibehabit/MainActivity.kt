@@ -11,19 +11,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.vibehabit.ui.theme.VibeHabitTheme
+import com.example.vibehabit.ui.theme.HabitTrackerTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
+import com.example.vibehabit.screens.DashboardScreen
+import com.example.vibehabit.navigation.AppNavigation
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-            VibeHabitTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+            HabitTrackerTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNavigation()
                 }
             }
         }
@@ -41,7 +44,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    VibeHabitTheme {
+    HabitTrackerTheme {
         Greeting("Android")
     }
 }
