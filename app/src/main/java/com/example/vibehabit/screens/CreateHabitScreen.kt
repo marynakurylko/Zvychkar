@@ -1,99 +1,191 @@
 package com.example.vibehabit.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vibehabit.components.ColorPicker
+import com.example.vibehabit.components.ColorSelector
+import com.example.vibehabit.components.IconSelector
+import com.example.vibehabit.components.NumberStepper
+import com.example.vibehabit.components.SegmentedControl
 import com.example.vibehabit.ui.theme.HabitTrackerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateHabitScreen(
     onBackClick: () -> Unit,
-    onSaveClick: (name: String, colorHex: String) -> Unit
+    onSaveClick: (name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String) -> Unit
 ) {
-    // Тимчасовий стан для вводу тексту (по замовчуванню порожньо)
     var habitName by remember { mutableStateOf("") }
-    // Тимчасовий стан для кольору (по замовчуванню наш фіолетовий)
-    var selectedColor by remember { mutableStateOf("#8A2BE2") }
+
+    // Стейт для нових контролів (поки що просто для візуалу)
+    var selectedFrequencyIndex by remember { mutableStateOf(0) }
+    var selectedIconIndex by remember { mutableStateOf(0) }
+
+    val neonColors = listOf("#9D4EDD", "#00E5FF", "#FF007F", "#00FF7F", "#FF9800")
+    var selectedColor by remember { mutableStateOf(neonColors[0]) }
+    var targetDays by remember { mutableIntStateOf(7) }
+    var customDays by remember { mutableStateOf(setOf<Int>()) }
+
+    val icons = listOf(Icons.Filled.Bolt, Icons.Filled.Favorite, Icons.Filled.DirectionsBike, Icons.Filled.Book)
+    val iconNames = listOf("Bolt", "Favorite", "Bike", "Book")
+    val frequencies = listOf("Daily", "Weekly", "Custom")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Нова звичка", fontWeight = FontWeight.Bold) },
+                title = { Text("Create Habit", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp), // Робимо гарні відступи від країв
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
-            // Поле для вводу тексту
-            OutlinedTextField(
-                value = habitName,
-                onValueChange = { habitName = it },
-                label = { Text("Назва звички") },
-                placeholder = { Text("Наприклад: Ранкова пробіжка") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary
-                )
-            )
-
-            // Блок вибору кольору
+            // 1. Блок Title
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Колір картки",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                ColorPicker(
-                    selectedColorHex = selectedColor,
-                    onColorSelected = { selectedColor = it }
+                Text("Title", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                TextField(
+                    value = habitName,
+                    onValueChange = { habitName = it },
+                    placeholder = { Text("Наприклад: Ранкова пробіжка", color = Color.Gray) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        focusedIndicatorColor = Color.Transparent, // Прибираємо нижню лінію
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    singleLine = true
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f)) // Виштовхує кнопку в самий низ екрана
+            // 2. Блок Icon
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Icon", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                IconSelector(
+                    icons = icons,
+                    selectedIndex = selectedIconIndex,
+                    onIconSelected = { selectedIconIndex = it }
+                )
+            }
 
-            // Кнопка Зберегти
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Color", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                ColorSelector(colors = neonColors, selectedColorHex = selectedColor, onColorSelected = { selectedColor = it })
+            }
+
+            // 3. Блок Frequency
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Frequency", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                SegmentedControl(items = frequencies, selectedIndex = selectedFrequencyIndex, onItemSelection = { selectedFrequencyIndex = it })
+
+                // Плавна анімація появи днів тижня
+                AnimatedVisibility(
+                    visible = frequencies[selectedFrequencyIndex] == "Custom",
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val weekDays = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд")
+                        weekDays.forEachIndexed { index, day ->
+                            val dayNumber = index + 1
+                            val isSelected = customDays.contains(dayNumber)
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable {
+                                        customDays = if (isSelected) customDays - dayNumber else customDays + dayNumber
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = day,
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 12.sp, fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Target count", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                NumberStepper(value = targetDays, onValueChange = { targetDays = it })
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Великий неоновий Button
             Button(
                 onClick = {
                     if (habitName.isNotBlank()) {
-                        onSaveClick(habitName, selectedColor)
+                        // Якщо "Custom", до назви частоти можна додати кількість днів
+                        val frequencyLabel = if (frequencies[selectedFrequencyIndex] == "Custom") {
+                            "Custom (${customDays.size} days)"
+                        } else frequencies[selectedFrequencyIndex]
+
+                        onSaveClick(
+                            habitName,
+                            selectedColor,
+                            iconNames[selectedIconIndex],
+                            targetDays,
+                            frequencyLabel
+                        )
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp), // Сучасна висока кнопка
-                shape = RoundedCornerShape(16.dp),
-                // Робимо кнопку неактивною, якщо назва порожня
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(android.graphics.Color.parseColor(selectedColor)), // Кнопка фарбується в обраний колір!
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 enabled = habitName.isNotBlank()
             ) {
-                Text("Створити", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Save Habit", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }
@@ -104,6 +196,6 @@ fun CreateHabitScreen(
 @Composable
 fun CreateHabitScreenPreview() {
     HabitTrackerTheme {
-        CreateHabitScreen(onBackClick = {}, onSaveClick = { _, _ -> })
+        CreateHabitScreen(onBackClick = {}, onSaveClick = { _, _, _, _, _ -> })
     }
 }

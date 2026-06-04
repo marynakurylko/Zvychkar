@@ -1,45 +1,56 @@
 package com.example.vibehabit.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.Habit
 import com.example.vibehabit.ui.theme.HabitTrackerTheme
-import androidx.compose.runtime.*
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.foundation.clickable
 import java.time.LocalDate
+
+fun getIconByName(name: String): ImageVector {
+    return when (name) {
+        "Favorite" -> Icons.Filled.Favorite
+        "Bike" -> Icons.Filled.DirectionsBike
+        "Book" -> Icons.Filled.Book
+        else -> Icons.Filled.Bolt
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HabitCard(    habit: Habit,
-                  onCheckedChange: (Boolean) -> Unit,
-                  onFavoriteClick: () -> Unit,
-                  onDeleteClick: () -> Unit,
-                  onCardClick: () -> Unit,
-                  modifier: Modifier = Modifier
+fun HabitCard(
+    habit: Habit,
+    onCheckedChange: (Boolean) -> Unit,
+    onFavoriteClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onCardClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     // Визначаємо, чи виконана звичка сьогодні
     val today = LocalDate.now().toString()
     val isCompletedToday = habit.completedDates.contains(today)
 
-    // 1. Анімація прозорості ТІЛЬКИ для внутрішнього контенту
+    // Анімація прозорості для внутрішнього контенту
     val contentAlpha by animateFloatAsState(
         targetValue = if (isCompletedToday) 0.5f else 1f,
         label = "contentAlpha"
@@ -47,14 +58,15 @@ fun HabitCard(    habit: Habit,
 
     val textDecoration = if (isCompletedToday) TextDecoration.LineThrough else TextDecoration.None
 
-    val baseColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
+    // Визначаємо cardColor на основі habit.colorHex
+    val cardColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
         .getOrDefault(MaterialTheme.colorScheme.primary)
 
-    // 2. Колір фону картки. Робимо його світлішим для виконаних, але він залишається НЕПРОЗОРИМ (завдяки compositeOver)
+    // Колір фону картки
     val containerColor = if (isCompletedToday) {
-        baseColor.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface)
+        cardColor.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface)
     } else {
-        baseColor.copy(alpha = 0.18f).compositeOver(MaterialTheme.colorScheme.surface)
+        cardColor.copy(alpha = 0.18f).compositeOver(MaterialTheme.colorScheme.surface)
     }
 
     val dismissState = rememberSwipeToDismissBoxState(
@@ -66,7 +78,6 @@ fun HabitCard(    habit: Habit,
         }
     )
 
-    // 3. Оптимізована перевірка свайпу: червоний фон з'являється ТІЛЬКИ при русі вліво
     val isSwipingToDismiss = dismissState.targetValue == SwipeToDismissBoxValue.EndToStart && dismissState.progress > 0.05f
 
     SwipeToDismissBox(
@@ -78,9 +89,7 @@ fun HabitCard(    habit: Habit,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(vertical = 6.dp)
-                    .clickable { onCardClick() }
                     .background(
-                        // Фон стає червоним тільки якщо тягнемо вліво
                         color = if (isSwipingToDismiss) Color.Red.copy(alpha = 0.8f) else Color.Transparent,
                         shape = RoundedCornerShape(16.dp)
                     )
@@ -98,67 +107,102 @@ fun HabitCard(    habit: Habit,
         },
         modifier = modifier
     ) {
-        Card(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 6.dp)
-                .clickable { onCardClick() },
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = containerColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = if (isCompletedToday) 0.dp else 2.dp)
+                .padding(vertical = 8.dp)
         ) {
-            // 4. Застосовуємо alpha ТІЛЬКИ до Row (контенту)
-            Row(
+            // Сама картка
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(all = 16.dp)
-                    .alpha(contentAlpha), // Тепер прозорим стає текст і кнопки, а не фон картки
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(top = 12.dp, start = 12.dp)
+                    .clickable { onCardClick() },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = containerColor)
             ) {
-                IconButton(onClick = onFavoriteClick) {
-                    Icon(
-                        imageVector = if (habit.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                        contentDescription = "Favorite",
-                        tint = if (habit.isFavorite) baseColor else Color.Gray
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
-                    Text(
-                        text = habit.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textDecoration = textDecoration
-                    )
-                }
-                
-                val progress = (habit.completedDates.size.toFloat() / habit.targetDays).coerceAtMost(1f)
-                Box(contentAlignment = Alignment.Center) {
-                    // Кільце прогресу (на тлі)
-                    CircularProgressIndicator(
-                        progress = { progress },
-                        modifier = Modifier.size(48.dp), // Трохи більше за чекбокс
-                        color = baseColor,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                        strokeWidth = 3.dp,
-                    )
-
-                    // Сам чекбокс (поверх кільця)
-                    Checkbox(
-                        checked = isCompletedToday,
-                        onCheckedChange = onCheckedChange,
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = baseColor, // Робимо галочку під колір звички!
-                            checkmarkColor = Color.White
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(all = 16.dp)
+                        .alpha(contentAlpha),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                color = cardColor.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = getIconByName(habit.iconName),
+                            contentDescription = habit.name,
+                            tint = cardColor,
+                            modifier = Modifier.size(24.dp)
                         )
-                    )
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                        Text(
+                            text = habit.name,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textDecoration = textDecoration
+                        )
+                        Text(
+                            text = habit.frequency,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    val progress = (habit.completedDates.size.toFloat() / habit.targetDays).coerceAtMost(1f)
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.size(48.dp),
+                            color = cardColor,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            strokeWidth = 3.dp,
+                        )
+
+                        Checkbox(
+                            checked = isCompletedToday,
+                            onCheckedChange = onCheckedChange,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = cardColor,
+                                checkmarkColor = Color.White
+                            )
+                        )
+                    }
                 }
+            }
+
+            // Кнопка Favorite (зірочка) - тепер ВСЕРЕДИНУ Box, щоб Modifier.align(Alignment.TopStart) працював коректно
+            IconButton(
+                onClick = onFavoriteClick,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .size(36.dp)
+                    .background(MaterialTheme.colorScheme.background, shape = CircleShape)
+                    .border(1.dp, if (habit.isFavorite) cardColor.copy(alpha = 0.5f) else Color.Transparent, CircleShape)
+            ) {
+                Icon(
+                    imageVector = if (habit.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    contentDescription = "Favorite",
+                    tint = if (habit.isFavorite) cardColor else Color.Gray,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
@@ -168,7 +212,6 @@ fun HabitCardPreview() {
             habit = Habit(
                 id = 1,
                 name = "Ранкова йога та розтяжка",
-                isCompleted = false,
                 isFavorite = true,
                 colorHex = "#8A2BE2"
             ),

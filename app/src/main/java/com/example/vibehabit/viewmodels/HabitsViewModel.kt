@@ -50,7 +50,7 @@ class HabitsViewModel : ViewModel() {
         }
     }
 
-    fun addHabit(name: String, colorHex: String) {
+    fun addHabit(name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String) {
         _habits.update { currentList ->
             val newId = (currentList.maxOfOrNull { it.id } ?: 0) + 1
             val newHabit = Habit(
@@ -58,7 +58,10 @@ class HabitsViewModel : ViewModel() {
                 name = name,
                 isFavorite = false,
                 colorHex = colorHex,
-                completedDates = emptySet()
+                completedDates = emptySet(),
+                iconName = iconName,
+                targetDays = targetDays,
+                frequency = frequency
             )
             currentList + newHabit
         }

@@ -108,8 +108,8 @@ fun AppNavigation(
             composable("create_habit") {
                 CreateHabitScreen(
                     onBackClick = { navController.popBackStack() },
-                    onSaveClick = { name, colorHex ->
-                        viewModel.addHabit(name, colorHex)
+                    onSaveClick = { name, colorHex, iconName, targetDays, frequency ->
+                        viewModel.addHabit(name, colorHex, iconName, targetDays, frequency)
                         navController.popBackStack()
                     }
                 )
