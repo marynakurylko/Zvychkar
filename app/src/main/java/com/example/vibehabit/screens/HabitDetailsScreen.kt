@@ -18,13 +18,15 @@ import androidx.compose.ui.unit.sp
 import com.example.vibehabit.components.HabitCalendar
 import com.example.vibehabit.viewmodels.HabitsViewModel
 import com.example.vibehabit.components.NeonProgressRing
+import androidx.compose.material.icons.filled.Edit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitDetailsScreen(
     habitId: Int,
     viewModel: HabitsViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onEditClick: () -> Unit
 ) {
     val habits by viewModel.habits.collectAsState()
     val habit = habits.find { it.id == habitId }
@@ -47,6 +49,11 @@ fun HabitDetailsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onEditClick) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Edit Habit")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

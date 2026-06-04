@@ -107,6 +107,7 @@ fun AppNavigation(
 
             composable("create_habit") {
                 CreateHabitScreen(
+                    habitToEdit = null,
                     onBackClick = { navController.popBackStack() },
                     onSaveClick = { name, colorHex, iconName, targetDays, frequency ->
                         viewModel.addHabit(name, colorHex, iconName, targetDays, frequency)
@@ -127,6 +128,29 @@ fun AppNavigation(
             }
 
             composable(
+                route = "edit_habit/{habitId}",
+                arguments = listOf(navArgument("habitId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val habitId = backStackEntry.arguments?.getInt("habitId") ?: return@composable
+
+                // Знаходимо звичку в стейті
+                val habits by viewModel.habits.collectAsState()
+                val habit = habits.find { it.id == habitId }
+
+                if (habit != null) {
+                    CreateHabitScreen(
+                        habitToEdit = habit, // Передаємо існуючу звичку
+                        onBackClick = { navController.popBackStack() },
+                        onSaveClick = { name, colorHex, iconName, frequency, targetDays ->
+                            // Викликаємо нову функцію UPDATE
+                            viewModel.updateHabit(habit.id, name, colorHex, iconName, frequency, targetDays)
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+
+            composable(
                 route = "habit_details/{habitId}", // Вказуємо, що чекаємо параметр
                 arguments = listOf(navArgument("habitId") { type = NavType.IntType }) // Кажемо, що це число (Int)
             ) { backStackEntry ->
@@ -136,7 +160,8 @@ fun AppNavigation(
                 HabitDetailsScreen(
                     habitId = habitId,
                     viewModel = viewModel,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onEditClick = { navController.navigate("edit_habit/$habitId") }
                 )
             }
         }

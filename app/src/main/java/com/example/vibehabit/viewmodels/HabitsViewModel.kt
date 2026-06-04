@@ -72,4 +72,22 @@ class HabitsViewModel : ViewModel() {
             currentList.filter { it.id != habitId }
         }
     }
+
+    fun updateHabit(id: Int, name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String) {
+        _habits.update { currentList ->
+            currentList.map { habit ->
+                if (habit.id == id) {
+                    habit.copy(
+                        name = name,
+                        colorHex = colorHex,
+                        iconName = iconName,
+                        targetDays = targetDays,
+                        frequency = frequency
+                    )
+                } else {
+                    habit
+                }
+            }
+        }
+    }
 }

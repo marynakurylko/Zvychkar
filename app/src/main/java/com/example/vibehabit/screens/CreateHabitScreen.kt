@@ -27,32 +27,45 @@ import com.example.vibehabit.components.IconSelector
 import com.example.vibehabit.components.NumberStepper
 import com.example.vibehabit.components.SegmentedControl
 import com.example.vibehabit.ui.theme.HabitTrackerTheme
+import com.example.vibehabit.Habit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateHabitScreen(
+    habitToEdit: Habit? = null,
     onBackClick: () -> Unit,
     onSaveClick: (name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String) -> Unit
 ) {
-    var habitName by remember { mutableStateOf("") }
-
-    // Стейт для нових контролів (поки що просто для візуалу)
-    var selectedFrequencyIndex by remember { mutableStateOf(0) }
-    var selectedIconIndex by remember { mutableStateOf(0) }
-
     val neonColors = listOf("#9D4EDD", "#00E5FF", "#FF007F", "#00FF7F", "#FF9800")
-    var selectedColor by remember { mutableStateOf(neonColors[0]) }
-    var targetDays by remember { mutableIntStateOf(7) }
-    var customDays by remember { mutableStateOf(setOf<Int>()) }
-
     val icons = listOf(Icons.Filled.Bolt, Icons.Filled.Favorite, Icons.Filled.DirectionsBike, Icons.Filled.Book)
     val iconNames = listOf("Bolt", "Favorite", "Bike", "Book")
     val frequencies = listOf("Daily", "Weekly", "Custom")
 
+    var habitName by remember { mutableStateOf(habitToEdit?.name ?: "") }
+    var targetDays by remember { mutableIntStateOf(habitToEdit?.targetDays ?: 7) }
+    var selectedColor by remember { mutableStateOf(habitToEdit?.colorHex ?: neonColors[0]) }
+
+    // Шукаємо індекс іконки
+    var selectedIconIndex by remember {
+        val index = iconNames.indexOf(habitToEdit?.iconName)
+        mutableIntStateOf(if (index >= 0) index else 0)
+    }
+
+    val screenTitle = if (habitToEdit == null) "Create Habit" else "Edit Habit"
+
+    // Визначаємо частоту
+    var selectedFrequencyIndex by remember {
+        val freq = habitToEdit?.frequency ?: "Daily"
+        val index = if (freq.startsWith("Custom")) 2 else frequencies.indexOf(freq)
+        mutableIntStateOf(if (index >= 0) index else 0)
+    }
+
+    var customDays by remember { mutableStateOf(setOf<Int>()) }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Habit", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Text(screenTitle, fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -70,7 +83,8 @@ fun CreateHabitScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
