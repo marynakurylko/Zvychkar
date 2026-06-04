@@ -103,43 +103,58 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
         saveHabits(newList)
     }
 
-    fun addHabit(name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String) {
+    private fun handleReminder(habitId: Int, habitName: String, reminderTime: String?) {
+        val context = getApplication<Application>()
+        if (reminderTime != null) {
+            // Розбиваємо "09:30" на 9 та 30
+            val parts = reminderTime.split(":")
+            if (parts.size == 2) {
+                val hour = parts[0].toIntOrNull() ?: 9
+                val minute = parts[1].toIntOrNull() ?: 0
+                com.example.vibehabit.notifications.NotificationHelper.scheduleHabitReminder(
+                    context, habitId, habitName, hour, minute
+                )
+            }
+        } else {
+            // Якщо час null — скасовуємо попередній будильник
+            com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(context, habitId)
+        }
+    }
+
+    fun addHabit(name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
         val currentList = _habits.value
         val newId = (currentList.maxOfOrNull { it.id } ?: 0) + 1
         val newHabit = Habit(
-            id = newId,
-            name = name,
-            isFavorite = false,
-            colorHex = colorHex,
-            completedDates = emptySet(),
-            iconName = iconName,
-            targetDays = targetDays,
-            frequency = frequency
+            id = newId, name = name, isFavorite = false, colorHex = colorHex,
+            completedDates = emptySet(), iconName = iconName, targetDays = targetDays,
+            frequency = frequency, reminderTime = reminderTime // Зберігаємо час
         )
         saveHabits(currentList + newHabit)
+
+        // ВАЖЛИВО: Налаштовуємо пуш
+        handleReminder(newId, name, reminderTime)
+    }
+
+    fun updateHabit(id: Int, name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
+        val currentList = _habits.value
+        val newList = currentList.map { habit ->
+            if (habit.id == id) {
+                habit.copy(
+                    name = name, colorHex = colorHex, iconName = iconName,
+                    targetDays = targetDays, frequency = frequency, reminderTime = reminderTime
+                )
+            } else habit
+        }
+        saveHabits(newList)
+
+        handleReminder(id, name, reminderTime)
     }
 
     fun deleteHabit(habitId: Int) {
         val currentList = _habits.value
         val newList = currentList.filter { it.id != habitId }
         saveHabits(newList)
-    }
-
-    fun updateHabit(id: Int, name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String) {
-        val currentList = _habits.value
-        val newList = currentList.map { habit ->
-            if (habit.id == id) {
-                habit.copy(
-                    name = name,
-                    colorHex = colorHex,
-                    iconName = iconName,
-                    targetDays = targetDays,
-                    frequency = frequency
-                )
-            } else {
-                habit
-            }
-        }
-        saveHabits(newList)
+        // Скасовуємо при видаленні
+        com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(getApplication<Application>(), habitId)
     }
 }

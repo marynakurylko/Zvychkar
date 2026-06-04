@@ -51,4 +51,14 @@
     <string name="stepper_decrease">Decrease</string>
     <string name="stepper_increase">Increase</string>
     <string name="hello_android">Hello %1$s!</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Habit Reminders</string>
+    <string name="notification_channel_description">Channel for habit reminders</string>
+    <string name="notification_default_content">Time for your habit!</string>
+    <string name="notification_title">VibeHabit 🚀</string>
+    <string name="notification_content_prefix">Reminder: %1$s</string>
+    <string name="reminders_enable_label">Enable reminders</string>
+    <string name="reminders_enable_desc">Receive push notifications</string>
+    <string name="reminders_time_label">Time</string>
 </resources>

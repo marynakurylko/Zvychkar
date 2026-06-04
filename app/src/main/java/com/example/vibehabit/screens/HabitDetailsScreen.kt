@@ -109,6 +109,49 @@ fun HabitDetailsScreen(
                 modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
             )
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                // Картка "Поточна серія"
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "🔥 ${habit.currentStreak}",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFF9800)
+                    )
+                    Text(
+                        text = "Поточна серія", // stringResource(R.string.current_streak)
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Вертикальний розділювач
+                Divider(
+                    modifier = Modifier.height(40.dp).width(1.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                )
+
+                // Картка "Рекорд"
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "👑 ${habit.bestStreak}",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFD700) // Золотий колір
+                    )
+                    Text(
+                        text = "Рекорд", // stringResource(R.string.best_streak)
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             HabitCalendar(
                 completedDates = habit.completedDates,
                 habitColor = headerColor,

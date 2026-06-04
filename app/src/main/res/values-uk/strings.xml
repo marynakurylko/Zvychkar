@@ -51,4 +51,14 @@
     <string name="stepper_decrease">Зменшити</string>
     <string name="stepper_increase">Збільшити</string>
     <string name="hello_android">Привіт, %1$s!</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Нагадування про звички</string>
+    <string name="notification_channel_description">Канал для нагадувань про ваші звички</string>
+    <string name="notification_default_content">Час для вашої звички!</string>
+    <string name="notification_title">VibeHabit 🚀</string>
+    <string name="notification_content_prefix">Нагадування: %1$s</string>
+    <string name="reminders_enable_label">Увімкнути нагадування</string>
+    <string name="reminders_enable_desc">Отримувати пуш-сповіщення</string>
+    <string name="reminders_time_label">Час</string>
 </resources>

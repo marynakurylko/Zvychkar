@@ -144,7 +144,7 @@ fun HabitCard(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = habit.name,
                             fontSize = 18.sp,
@@ -152,19 +152,25 @@ fun HabitCard(
                             color = MaterialTheme.colorScheme.onSurface,
                             textDecoration = textDecoration
                         )
-                        
-                        // Локалізація частоти
-                        val displayFrequency = when (habit.frequency) {
-                            "Daily" -> stringResource(R.string.freq_daily)
-                            "Weekly" -> stringResource(R.string.freq_weekly)
-                            else -> habit.frequency
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = habit.frequency, // Або stringResource(R.string.frequency)
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            // Показуємо вогник, тільки якщо стрік більше 0
+                            if (habit.currentStreak > 0) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "🔥 ${habit.currentStreak}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFFF9800) // Яскраво-помаранчевий
+                                )
+                            }
                         }
-                        
-                        Text(
-                            text = displayFrequency,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
 
                     val progress = (habit.completedDates.size.toFloat() / habit.targetDays).coerceAtMost(1f)

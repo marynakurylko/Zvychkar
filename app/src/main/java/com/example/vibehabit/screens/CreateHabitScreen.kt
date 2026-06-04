@@ -32,14 +32,16 @@ import com.example.vibehabit.ui.theme.HabitTrackerTheme
 import com.example.vibehabit.Habit
 import androidx.compose.ui.res.stringResource
 import com.example.vibehabit.R
+import android.app.TimePickerDialog
+import androidx.compose.ui.platform.LocalContext
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateHabitScreen(
     habitToEdit: Habit? = null,
     onBackClick: () -> Unit,
-    onSaveClick: (name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String) -> Unit
-) {
+    onSaveClick: (name: String, colorHex: String, iconName: String, frequency: String, targetDays: Int, reminderTime: String?) -> Unit) {
     val neonColors = listOf("#9D4EDD", "#00E5FF", "#FF007F", "#00FF7F", "#FF9800")
     val icons = listOf(Icons.Filled.Bolt, Icons.Filled.Favorite, Icons.Filled.DirectionsBike, Icons.Filled.Book)
     val iconNames = listOf("Bolt", "Favorite", "Bike", "Book")
@@ -72,6 +74,30 @@ fun CreateHabitScreen(
     }
 
     var customDays by remember { mutableStateOf(setOf<Int>()) }
+
+    var isReminderEnabled by remember { mutableStateOf(habitToEdit?.reminderTime != null) }
+    var reminderTime by remember { mutableStateOf(habitToEdit?.reminderTime ?: "09:00") }
+
+    val context = LocalContext.current
+
+    // Діалог вибору часу (Android TimePickerDialog)
+    val timePickerDialog = remember {
+        val parts = reminderTime.split(":")
+        val defaultHour = parts.getOrNull(0)?.toIntOrNull() ?: 9
+        val defaultMinute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+
+        TimePickerDialog(
+            context,
+            { _, hourOfDay, minute ->
+                // Форматуємо час з нулями (наприклад, 09:05)
+                val formattedTime = String.format("%02d:%02d", hourOfDay, minute)
+                reminderTime = formattedTime
+            },
+            defaultHour,
+            defaultMinute,
+            true // 24-годинний формат
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -185,22 +211,72 @@ fun CreateHabitScreen(
                 NumberStepper(value = targetDays, onValueChange = { targetDays = it })
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            val customFreqFormat = stringResource(R.string.custom_frequency_format, customDays.size)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Рядок зі Світчем
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(stringResource(R.string.reminders_enable_label), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                        Text(stringResource(R.string.reminders_enable_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = isReminderEnabled,
+                        onCheckedChange = { isReminderEnabled = it },
+                        colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary)
+                    )
+                }
+
+                // Блок з часом, який плавно виїжджає
+                AnimatedVisibility(
+                    visible = isReminderEnabled,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(12.dp))
+                            .clickable { timePickerDialog.show() }
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Notifications, contentDescription = "Time", tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(stringResource(R.string.reminders_time_label), fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                        Text(reminderTime, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(
                 onClick = {
                     if (habitName.isNotBlank()) {
                         val frequencyLabel = if (frequencies[selectedFrequencyIndex] == "Custom") {
-                            customFreqFormat
+                            context.getString(R.string.custom_frequency_format, customDays.size)
                         } else frequencies[selectedFrequencyIndex]
 
+                        // Формуємо фінальний час (або null)
+                        val finalReminderTime = if (isReminderEnabled) reminderTime else null
+
                         onSaveClick(
-                            habitName,
-                            selectedColor,
-                            iconNames[selectedIconIndex],
-                            targetDays,
-                            frequencyLabel
+                            habitName, selectedColor, iconNames[selectedIconIndex],
+                            frequencyLabel, targetDays, finalReminderTime // Передаємо час!
                         )
                     }
                 },
@@ -222,6 +298,6 @@ fun CreateHabitScreen(
 @Composable
 fun CreateHabitScreenPreview() {
     HabitTrackerTheme {
-        CreateHabitScreen(onBackClick = {}, onSaveClick = { _, _, _, _, _ -> })
+        CreateHabitScreen(onBackClick = {}, onSaveClick = { _, _, _, _, _, _ -> })
     }
 }

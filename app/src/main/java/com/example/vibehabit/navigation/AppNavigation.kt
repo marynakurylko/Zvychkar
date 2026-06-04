@@ -103,8 +103,8 @@ fun AppNavigation(
                 CreateHabitScreen(
                     habitToEdit = null,
                     onBackClick = { navController.popBackStack() },
-                    onSaveClick = { name, colorHex, iconName, targetDays, frequency ->
-                        viewModel.addHabit(name, colorHex, iconName, targetDays, frequency)
+                    onSaveClick = { name, colorHex, iconName, frequency, targetDays, finalReminderTime ->
+                        viewModel.addHabit(name, colorHex, iconName, targetDays, frequency, finalReminderTime)
                         navController.popBackStack()
                     }
                 )
@@ -134,9 +134,8 @@ fun AppNavigation(
                     CreateHabitScreen(
                         habitToEdit = habit,
                         onBackClick = { navController.popBackStack() },
-                        onSaveClick = { name, colorHex, iconName, targetDays, frequency ->
-                            // Corrected argument order to fix type mismatch
-                            viewModel.updateHabit(habit.id, name, colorHex, iconName, targetDays, frequency)
+                        onSaveClick = { name, colorHex, iconName, frequency, targetDays, finalReminderTime ->
+                            viewModel.updateHabit(habit.id, name, colorHex, iconName, targetDays, frequency, finalReminderTime)
                             navController.popBackStack()
                         }
                     )
