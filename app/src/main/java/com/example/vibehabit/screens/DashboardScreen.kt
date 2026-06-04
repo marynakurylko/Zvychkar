@@ -4,22 +4,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
+import com.example.vibehabit.components.DailySummaryCard
 import com.example.vibehabit.components.HabitCard
 import com.example.vibehabit.viewmodels.HabitsViewModel
 import nl.dionsegijn.konfetti.compose.KonfettiView
@@ -29,10 +25,8 @@ import nl.dionsegijn.konfetti.core.PartySystem
 import nl.dionsegijn.konfetti.core.Position
 import nl.dionsegijn.konfetti.core.emitter.Emitter
 import java.time.LocalDate
-import java.util.concurrent.TimeUnit
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-import com.example.vibehabit.components.DailySummaryCard
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,22 +35,21 @@ fun DashboardScreen(
     onAddHabitClick: () -> Unit,
     onHabitClick: (Int) -> Unit
 ) {
-    // Отримуємо стан з ViewModel
     val habits by viewModel.habits.collectAsState()
-
     var showConfetti by remember { mutableStateOf(false) }
 
     val today = LocalDate.now()
     val todayStr = today.toString()
 
-    // 1. РОЗУМНЕ СОРТУВАННЯ (тепер воно працює)
     val sortedHabits = habits.sortedWith(
-        compareBy<com.example.vibehabit.Habit> { it.completedDates.contains(todayStr) } // Виконані вниз
-            .thenByDescending { it.isFavorite } // Улюблені вгору
-            .thenBy { it.id } // Для стабільності
+        compareBy<com.example.vibehabit.Habit> { it.completedDates.contains(todayStr) }
+            .thenByDescending { it.isFavorite }
+            .thenBy { it.id }
     )
 
-    val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("uk", "UA"))
+    // Форматування дати тепер використовує ресурс
+    val dateFormat = stringResource(R.string.dashboard_date_format)
+    val dateFormatter = DateTimeFormatter.ofPattern(dateFormat)
     val dateText = today.format(dateFormatter).replaceFirstChar { it.uppercase() }
 
     val party = Party(
@@ -77,7 +70,7 @@ fun DashboardScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "VibeHabit",
+                        text = stringResource(R.string.app_name),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -92,7 +85,10 @@ fun DashboardScreen(
                 onClick = onAddHabitClick,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Habit")
+                Icon(
+                    imageVector = Icons.Filled.Add, 
+                    contentDescription = stringResource(R.string.add_habit_desc)
+                )
             }
         }
     ) { paddingValues ->
@@ -113,7 +109,6 @@ fun DashboardScreen(
                     )
                 }
 
-                // ВИКОРИСТОВУЄМО sortedHabits ЗАМІСТЬ habits
                 items(items = sortedHabits, key = { it.id }) { habit ->
                     val isCompletedToday = habit.completedDates.contains(todayStr)
 
@@ -122,20 +117,16 @@ fun DashboardScreen(
                         onCheckedChange = {
                             if (!isCompletedToday) {
                                 val isLastForToday = (completedHabitsToday + 1) == totalHabitsToday
-
                                 val isTargetReached = (habit.completedDates.size + 1) == habit.targetDays
-
                                 if (isLastForToday || isTargetReached) {
                                     showConfetti = true
                                 }
                             }
-                            // Зберігаємо стан у ViewModel
                             viewModel.toggleHabitCompletion(habit.id, todayStr)
                         },
                         onFavoriteClick = { viewModel.toggleHabitFavorite(habit.id) },
                         onDeleteClick = { viewModel.deleteHabit(habit.id) },
                         onCardClick = { onHabitClick(habit.id) },
-
                         modifier = Modifier.animateItem()
                     )
                 }

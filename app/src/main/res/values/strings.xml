@@ -1,3 +1,54 @@
 <resources>
     <string name="app_name">VibeHabit</string>
+    <string name="settings_title">Settings</string>
+    <string name="language_english">English</string>
+    <string name="language_ukrainian">Українська</string>
+    <string name="choose_language">Choose Language</string>
+    <string name="dark_theme_label">Dark Theme</string>
+
+    <string name="nav_home_desc">Home</string>
+    <string name="nav_habits_label">Habits</string>
+    <string name="nav_calendar_desc">Calendar</string>
+    <string name="nav_calendar_label">Calendar</string>
+    <string name="nav_settings_desc">Settings</string>
+    <string name="nav_settings_label">Settings</string>
+
+    <string name="create_habit_title">Create Habit</string>
+    <string name="edit_habit_title">Edit Habit</string>
+    <string name="back_desc">Back</string>
+    <string name="habit_title_label">Title</string>
+    <string name="habit_title_placeholder">e.g. Morning run</string>
+    <string name="habit_icon_label">Icon</string>
+    <string name="habit_color_label">Color</string>
+    <string name="habit_frequency_label">Frequency</string>
+    <string name="freq_daily">Daily</string>
+    <string name="freq_weekly">Weekly</string>
+    <string name="freq_custom">Custom</string>
+    <string name="day_mon">Mo</string>
+    <string name="day_tue">Tu</string>
+    <string name="day_wed">We</string>
+    <string name="day_thu">Th</string>
+    <string name="day_fri">Fr</string>
+    <string name="day_sat">Sa</string>
+    <string name="day_sun">Su</string>
+    <string name="target_count_label">Target count</string>
+    <string name="save_habit_button">Save Habit</string>
+    <string name="custom_frequency_format">Custom (%1$d days)</string>
+
+    <string name="add_habit_desc">Add Habit</string>
+    <string name="calendar_title">Schedule</string>
+    <string name="today_label">Today</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_missed">Missed</string>
+    <string name="status_waiting">Waiting</string>
+    <string name="stats_title">Statistics</string>
+    <string name="edit_habit_desc">Edit Habit</string>
+    <string name="delete_desc">Delete</string>
+    <string name="favorite_desc">Favorite</string>
+    <string name="habit_frequency_prefix">Frequency: %1$s</string>
+    <string name="dashboard_date_format">EEEE, d MMMM</string>
+
+    <string name="stepper_decrease">Decrease</string>
+    <string name="stepper_increase">Increase</string>
+    <string name="hello_android">Hello %1$s!</string>
 </resources>

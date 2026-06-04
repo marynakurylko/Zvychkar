@@ -13,9 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 import com.example.vibehabit.viewmodels.HabitsViewModel
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -24,11 +26,9 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(viewModel: HabitsViewModel) {
-    // Реактивний стан для обраної дати (за замовчуванням - сьогодні)
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val habits by viewModel.habits.collectAsState()
 
-    // Генеруємо список із 14 днів (7 днів до сьогодні і 7 після)
     val dates = remember {
         val today = LocalDate.now()
         (-7..7L).map { today.plusDays(it) }
@@ -37,7 +37,7 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Розклад", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.calendar_title), fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
@@ -49,7 +49,6 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 1. Горизонтальний календар (Скляний ефект)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -68,7 +67,9 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                     items(dates) { date ->
                         val isSelected = date == selectedDate
                         val isToday = date == LocalDate.now()
-                        val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("uk", "UA"))
+                        
+                        // Використовуємо системну мову для назв днів
+                        val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
 
                         Column(
                             modifier = Modifier
@@ -100,9 +101,8 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2. Список звичок для обраного дня
             Text(
-                text = if (selectedDate == LocalDate.now()) "Сьогодні" else selectedDate.toString(),
+                text = if (selectedDate == LocalDate.now()) stringResource(R.string.today_label) else selectedDate.toString(),
                 modifier = Modifier.padding(horizontal = 16.dp),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -117,9 +117,6 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
             ) {
                 items(habits) { habit ->
                     val isCompletedOnSelectedDate = habit.completedDates.contains(selectedDate.toString())
-
-                    // Використовуємо спрощену версію картки або нашу існуючу
-                    // Для різноманітності зробимо тут красиву плашку статусу
                     val habitColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
                         .getOrDefault(MaterialTheme.colorScheme.surface)
 
@@ -129,7 +126,6 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp)
-                            // Якщо це минуле або сьогодні - робимо рядок клікабельним!
                             .let {
                                 if (isPastOrToday) {
                                     it.clickable {
@@ -159,12 +155,16 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                                     .background(habitColor, RoundedCornerShape(8.dp))
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                             ) {
-                                Text("Виконано", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = stringResource(R.string.status_completed),
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         } else {
-                            // Якщо це майбутнє, пишемо "Очікує", інакше "Пропущено"
                             Text(
-                                text = if (isPastOrToday) "Пропущено" else "Очікує",
+                                text = if (isPastOrToday) stringResource(R.string.status_missed) else stringResource(R.string.status_waiting),
                                 color = Color.Gray,
                                 fontSize = 12.sp
                             )

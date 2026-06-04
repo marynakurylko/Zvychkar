@@ -7,18 +7,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 import com.example.vibehabit.components.HabitCalendar
-import com.example.vibehabit.viewmodels.HabitsViewModel
 import com.example.vibehabit.components.NeonProgressRing
-import androidx.compose.material.icons.filled.Edit
+import com.example.vibehabit.viewmodels.HabitsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +38,6 @@ fun HabitDetailsScreen(
     val headerColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
         .getOrDefault(MaterialTheme.colorScheme.primary)
 
-    // Додаємо скрол, щоб екран красиво прокручувався на маленьких телефонах
     val scrollState = rememberScrollState()
 
     val totalCompleted = habit.completedDates.size
@@ -45,15 +46,21 @@ fun HabitDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Статистика", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.stats_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack, 
+                            contentDescription = stringResource(R.string.back_desc)
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = onEditClick) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Edit Habit")
+                        Icon(
+                            imageVector = Icons.Filled.Edit, 
+                            contentDescription = stringResource(R.string.edit_habit_desc)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -72,55 +79,14 @@ fun HabitDetailsScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Шапка
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .background(headerColor.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
-//                    .padding(32.dp),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Text(
-//                    text = habit.name,
-//                    fontSize = 24.sp,
-//                    fontWeight = FontWeight.Bold,
-//                    color = headerColor,
-//                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-//                )
-//            }
-//
-//            Spacer(modifier = Modifier.height(24.dp))
-//
-//            // Ряд зі швидкою статистикою
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.spacedBy(16.dp)
-//            ) {
-//                // Міні-картка "Всього разів"
-//                StatCard(
-//                    title = "Всього виконано",
-//                    value = "${habit.completedDates.size} днів",
-//                    modifier = Modifier.weight(1f)
-//                )
-//                // Можна додати ще метрики в майбутньому (наприклад, "Найдовша серія")
-//                StatCard(
-//                    title = "Статус сьогодні",
-//                    value = if (habit.completedDates.contains(java.time.LocalDate.now().toString())) "Виконано 🔥" else "Очікує ⏳",
-//                    modifier = Modifier.weight(1f)
-//                )
-//            }
-//
-//            Spacer(modifier = Modifier.height(24.dp))
-
             NeonProgressRing(
                 progress = progress,
                 color = headerColor,
                 centerText = "$totalCompleted / ${habit.targetDays}",
-                subtitle = "Виконано",
+                subtitle = stringResource(R.string.status_completed),
                 modifier = Modifier.padding(vertical = 32.dp)
             )
 
-            // Заголовок звички
             Text(
                 text = habit.name,
                 fontSize = 28.sp,
@@ -129,14 +95,20 @@ fun HabitDetailsScreen(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
 
+            // Відображаємо частоту. Якщо це стандартні значення - перекладаємо.
+            val displayFrequency = when (habit.frequency) {
+                "Daily" -> stringResource(R.string.freq_daily)
+                "Weekly" -> stringResource(R.string.freq_weekly)
+                else -> habit.frequency // Для Custom вже збережено локалізований рядок або формат
+            }
+
             Text(
-                text = "Частота: ${habit.frequency}",
+                text = stringResource(R.string.habit_frequency_prefix, displayFrequency),
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
             )
 
-            // Наш новий Календар!
             HabitCalendar(
                 completedDates = habit.completedDates,
                 habitColor = headerColor,
@@ -146,36 +118,6 @@ fun HabitDetailsScreen(
             )
 
             Spacer(modifier = Modifier.height(32.dp))
-        }
-    }
-}
-
-// Допоміжний компонент для красивих карток статистики
-@Composable
-fun StatCard(title: String, value: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = title,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = value,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
         }
     }
 }

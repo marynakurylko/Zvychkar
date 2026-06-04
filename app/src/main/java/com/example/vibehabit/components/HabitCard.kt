@@ -18,12 +18,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.Habit
+import com.example.vibehabit.R
 import com.example.vibehabit.ui.theme.HabitTrackerTheme
 import java.time.LocalDate
 
@@ -46,11 +48,9 @@ fun HabitCard(
     onCardClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Визначаємо, чи виконана звичка сьогодні
     val today = LocalDate.now().toString()
     val isCompletedToday = habit.completedDates.contains(today)
 
-    // Анімація прозорості для внутрішнього контенту
     val contentAlpha by animateFloatAsState(
         targetValue = if (isCompletedToday) 0.5f else 1f,
         label = "contentAlpha"
@@ -58,11 +58,9 @@ fun HabitCard(
 
     val textDecoration = if (isCompletedToday) TextDecoration.LineThrough else TextDecoration.None
 
-    // Визначаємо cardColor на основі habit.colorHex
     val cardColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
         .getOrDefault(MaterialTheme.colorScheme.primary)
 
-    // Колір фону картки
     val containerColor = if (isCompletedToday) {
         cardColor.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface)
     } else {
@@ -99,7 +97,7 @@ fun HabitCard(
                 if (isSwipingToDismiss) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.delete_desc),
                         tint = Color.White
                     )
                 }
@@ -112,7 +110,6 @@ fun HabitCard(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
         ) {
-            // Сама картка
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -155,8 +152,16 @@ fun HabitCard(
                             color = MaterialTheme.colorScheme.onSurface,
                             textDecoration = textDecoration
                         )
+                        
+                        // Локалізація частоти
+                        val displayFrequency = when (habit.frequency) {
+                            "Daily" -> stringResource(R.string.freq_daily)
+                            "Weekly" -> stringResource(R.string.freq_weekly)
+                            else -> habit.frequency
+                        }
+                        
                         Text(
-                            text = habit.frequency,
+                            text = displayFrequency,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -184,7 +189,6 @@ fun HabitCard(
                 }
             }
 
-            // Кнопка Favorite (зірочка) - тепер ВСЕРЕДИНУ Box, щоб Modifier.align(Alignment.TopStart) працював коректно
             IconButton(
                 onClick = onFavoriteClick,
                 modifier = Modifier
@@ -195,30 +199,11 @@ fun HabitCard(
             ) {
                 Icon(
                     imageVector = if (habit.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                    contentDescription = "Favorite",
+                    contentDescription = stringResource(R.string.favorite_desc),
                     tint = if (habit.isFavorite) cardColor else Color.Gray,
                     modifier = Modifier.size(20.dp)
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HabitCardPreview() {
-    HabitTrackerTheme {
-        HabitCard(
-            habit = Habit(
-                id = 1,
-                name = "Ранкова йога та розтяжка",
-                isFavorite = true,
-                colorHex = "#8A2BE2"
-            ),
-            onCheckedChange = {},
-            onFavoriteClick = {},
-            onDeleteClick = {},
-            onCardClick = {}
-        )
     }
 }

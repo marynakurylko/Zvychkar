@@ -16,9 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 
 @Composable
 fun DailySummaryCard(
@@ -27,21 +29,18 @@ fun DailySummaryCard(
     totalCount: Int,
     modifier: Modifier = Modifier
 ) {
-    // Вираховуємо відсоток прогресу
     val targetProgress = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
 
-    // Плавна анімація для горизонтальної смужки
     val animatedProgress by animateFloatAsState(
         targetValue = targetProgress,
         animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
         label = "DailyProgress"
     )
 
-    // Колір акценту (наш фірмовий фіолетовий або зелений, якщо все виконано)
     val accentColor = if (completedCount == totalCount && totalCount > 0) {
-        Color(0xFF00FF7F) // Neon Green, якщо все зроблено!
+        Color(0xFF00FF7F)
     } else {
-        MaterialTheme.colorScheme.primary // Neon Purple
+        MaterialTheme.colorScheme.primary
     }
 
     Box(
@@ -61,7 +60,7 @@ fun DailySummaryCard(
             ) {
                 Column {
                     Text(
-                        text = "Сьогодні",
+                        text = stringResource(R.string.today_label),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -73,7 +72,6 @@ fun DailySummaryCard(
                     )
                 }
 
-                // Текст прогресу (напр. "2 / 5")
                 Text(
                     text = "$completedCount / $totalCount",
                     fontSize = 24.sp,
@@ -84,7 +82,6 @@ fun DailySummaryCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Неонова горизонтальна лінія
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -96,7 +93,6 @@ fun DailySummaryCard(
                 val glowW = 20.dp.toPx()
                 val yOffset = size.height / 2
 
-                // 1. Темний трек (тло)
                 drawLine(
                     color = Color.Black.copy(alpha = 0.3f),
                     start = Offset(0f, yOffset),
@@ -106,7 +102,6 @@ fun DailySummaryCard(
                 )
 
                 if (animatedProgress > 0f) {
-                    // 2. Світіння (Glow)
                     drawLine(
                         color = accentColor.copy(alpha = 0.4f),
                         start = Offset(0f, yOffset),
@@ -115,7 +110,6 @@ fun DailySummaryCard(
                         cap = StrokeCap.Round
                     )
 
-                    // 3. Ядро (яскрава лінія)
                     drawLine(
                         color = accentColor,
                         start = Offset(0f, yOffset),

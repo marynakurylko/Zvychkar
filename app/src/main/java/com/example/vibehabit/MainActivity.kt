@@ -1,39 +1,35 @@
 package com.example.vibehabit
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.vibehabit.ui.theme.HabitTrackerTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.MaterialTheme
-import com.example.vibehabit.screens.DashboardScreen
 import com.example.vibehabit.navigation.AppNavigation
+import com.example.vibehabit.ui.theme.HabitTrackerTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
-            // Зчитуємо системну тему один раз при старті
             val systemTheme = isSystemInDarkTheme()
-            // Створюємо реактивний стан теми
-            var isDarkTheme by remember { mutableStateOf(systemTheme) }
+            // Використовуємо rememberSaveable, щоб стан зберігся при перестворенні Activity (наприклад, при зміні мови)
+            var isDarkTheme by rememberSaveable { mutableStateOf(systemTheme) }
 
             HabitTrackerTheme(darkTheme = isDarkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Передаємо стан і функцію зміни теми в наш роутер
                     AppNavigation(
                         isDarkTheme = isDarkTheme,
                         onThemeChange = { isDarkTheme = it }

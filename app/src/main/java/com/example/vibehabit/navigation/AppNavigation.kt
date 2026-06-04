@@ -22,6 +22,8 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.vibehabit.screens.CalendarScreen
 import com.example.vibehabit.screens.HabitDetailsScreen
+import androidx.compose.ui.res.stringResource
+import com.example.vibehabit.R
 
 @Composable
 fun AppNavigation(
@@ -31,23 +33,19 @@ fun AppNavigation(
     val navController = rememberNavController()
     val viewModel: HabitsViewModel = viewModel()
 
-    // Слідкуємо за тим, на якому екрані ми зараз знаходимося
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Головний каркас з нижньою панеллю
     Scaffold(
         bottomBar = {
-            // Показуємо панель тільки на головних екранах
             if (currentRoute in listOf("dashboard", "calendar", "settings")) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 8.dp
                 ) {
-                    // Вкладка "Головна"
                     NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
-                        label = { Text("Звички") },
+                        icon = { Icon(Icons.Filled.Home, contentDescription = stringResource(R.string.nav_home_desc)) },
+                        label = { Text(stringResource(R.string.nav_habits_label)) },
                         selected = currentRoute == "dashboard",
                         onClick = {
                             if (currentRoute != "dashboard") {
@@ -60,10 +58,9 @@ fun AppNavigation(
                             indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         )
                     )
-                    // Вкладка "Календар" (Поки що пуста, просто заглушка маршруту)
                     NavigationBarItem(
-                        icon = { Icon(Icons.Filled.DateRange, contentDescription = "Calendar") },
-                        label = { Text("Календар") },
+                        icon = { Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.nav_calendar_desc)) },
+                        label = { Text(stringResource(R.string.nav_calendar_label)) },
                         selected = currentRoute == "calendar",
                         onClick = {
                             if (currentRoute != "calendar") navController.navigate("calendar")
@@ -73,10 +70,9 @@ fun AppNavigation(
                             indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         )
                     )
-                    // Вкладка "Налаштування"
                     NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Settings, contentDescription = "Settings") },
-                        label = { Text("Налаштування") },
+                        icon = { Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.nav_settings_desc)) },
+                        label = { Text(stringResource(R.string.nav_settings_label)) },
                         selected = currentRoute == "settings",
                         onClick = {
                             if (currentRoute != "settings") navController.navigate("settings")
@@ -90,13 +86,11 @@ fun AppNavigation(
             }
         }
     ) { innerPadding ->
-        // Наш роутер тепер враховує висоту нижньої панелі (innerPadding)
         NavHost(
             navController = navController,
             startDestination = "dashboard",
-            modifier = Modifier.padding(innerPadding) // Важливо! Щоб контент не ховався за панеллю
+            modifier = Modifier.padding(innerPadding)
         ) {
-
             composable("dashboard") {
                 DashboardScreen(
                     viewModel = viewModel,
@@ -133,17 +127,16 @@ fun AppNavigation(
             ) { backStackEntry ->
                 val habitId = backStackEntry.arguments?.getInt("habitId") ?: return@composable
 
-                // Знаходимо звичку в стейті
                 val habits by viewModel.habits.collectAsState()
                 val habit = habits.find { it.id == habitId }
 
                 if (habit != null) {
                     CreateHabitScreen(
-                        habitToEdit = habit, // Передаємо існуючу звичку
+                        habitToEdit = habit,
                         onBackClick = { navController.popBackStack() },
-                        onSaveClick = { name, colorHex, iconName, frequency, targetDays ->
-                            // Викликаємо нову функцію UPDATE
-                            viewModel.updateHabit(habit.id, name, colorHex, iconName, frequency, targetDays)
+                        onSaveClick = { name, colorHex, iconName, targetDays, frequency ->
+                            // Corrected argument order to fix type mismatch
+                            viewModel.updateHabit(habit.id, name, colorHex, iconName, targetDays, frequency)
                             navController.popBackStack()
                         }
                     )
@@ -151,10 +144,9 @@ fun AppNavigation(
             }
 
             composable(
-                route = "habit_details/{habitId}", // Вказуємо, що чекаємо параметр
-                arguments = listOf(navArgument("habitId") { type = NavType.IntType }) // Кажемо, що це число (Int)
+                route = "habit_details/{habitId}",
+                arguments = listOf(navArgument("habitId") { type = NavType.IntType })
             ) { backStackEntry ->
-                // Витягуємо ID з роутера
                 val habitId = backStackEntry.arguments?.getInt("habitId") ?: return@composable
 
                 HabitDetailsScreen(

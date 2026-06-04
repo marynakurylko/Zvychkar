@@ -12,10 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -31,10 +33,8 @@ fun HabitCalendar(
 ) {
     val currentMonth = YearMonth.now()
     val daysInMonth = currentMonth.lengthOfMonth()
-    // Визначаємо день тижня (1 - Пн, 7 - Нд)
     val firstDayOfWeek = currentMonth.atDay(1).dayOfWeek.value
 
-    // Ефект "матового скла" для підкладки календаря
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -45,8 +45,8 @@ fun HabitCalendar(
             .padding(20.dp)
     ) {
         Column {
-            // Заголовок (Місяць і Рік)
-            val monthName = currentMonth.month.getDisplayName(TextStyle.FULL_STANDALONE, Locale("uk", "UA"))
+            // Заголовок (Місяць і Рік) - використовуємо Locale.getDefault() для перекладу місяців
+            val monthName = currentMonth.month.getDisplayName(TextStyle.FULL_STANDALONE, Locale.getDefault())
             Text(
                 text = monthName.replaceFirstChar { it.uppercase() } + " " + currentMonth.year,
                 fontSize = 20.sp,
@@ -55,9 +55,17 @@ fun HabitCalendar(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Дні тижня
+            // Дні тижня - беремо з ресурсів
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                val daysOfWeek = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд")
+                val daysOfWeek = listOf(
+                    stringResource(R.string.day_mon),
+                    stringResource(R.string.day_tue),
+                    stringResource(R.string.day_wed),
+                    stringResource(R.string.day_thu),
+                    stringResource(R.string.day_fri),
+                    stringResource(R.string.day_sat),
+                    stringResource(R.string.day_sun)
+                )
                 daysOfWeek.forEach { day ->
                     Text(
                         text = day,
@@ -72,7 +80,6 @@ fun HabitCalendar(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Сітка днів
             val totalCells = daysInMonth + firstDayOfWeek - 1
             val rows = ceil(totalCells / 7.0).toInt()
             var currentDay = 1
@@ -86,10 +93,8 @@ fun HabitCalendar(
                 ) {
                     for (j in 0 until 7) {
                         if ((i == 0 && j < firstDayOfWeek - 1) || currentDay > daysInMonth) {
-                            // Пусті клітинки до початку і після кінця місяця
                             Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
                         } else {
-                            // Реальний день
                             val date = currentMonth.atDay(currentDay)
                             val dateStr = date.toString()
                             val isCompleted = completedDates.contains(dateStr)
@@ -99,11 +104,10 @@ fun HabitCalendar(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .aspectRatio(1f) // Робить клітинку ідеально квадратною
+                                    .aspectRatio(1f)
                                     .padding(4.dp)
                                     .clip(CircleShape)
                                     .let {
-                                        // Робимо кружечок клікабельним тільки для минулого і сьогодні
                                         if (isPastOrToday) {
                                             it.clickable { onDayClick(dateStr) }
                                         } else it

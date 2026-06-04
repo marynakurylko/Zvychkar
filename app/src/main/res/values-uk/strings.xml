@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">VibeHabit</string>
+    <string name="settings_title">Налаштування</string>
+    <string name="language_english">English</string>
+    <string name="language_ukrainian">Українська</string>
+    <string name="choose_language">Оберіть мову</string>
+    <string name="dark_theme_label">Темна тема</string>
+
+    <string name="nav_home_desc">Головна</string>
+    <string name="nav_habits_label">Звички</string>
+    <string name="nav_calendar_desc">Календар</string>
+    <string name="nav_calendar_label">Календар</string>
+    <string name="nav_settings_desc">Налаштування</string>
+    <string name="nav_settings_label">Налаштування</string>
+
+    <string name="create_habit_title">Створити звичку</string>
+    <string name="edit_habit_title">Редагувати звичку</string>
+    <string name="back_desc">Назад</string>
+    <string name="habit_title_label">Назва</string>
+    <string name="habit_title_placeholder">Наприклад: Ранкова пробіжка</string>
+    <string name="habit_icon_label">Іконка</string>
+    <string name="habit_color_label">Колір</string>
+    <string name="habit_frequency_label">Частота</string>
+    <string name="freq_daily">Щодня</string>
+    <string name="freq_weekly">Щотижня</string>
+    <string name="freq_custom">Інше</string>
+    <string name="day_mon">Пн</string>
+    <string name="day_tue">Вт</string>
+    <string name="day_wed">Ср</string>
+    <string name="day_thu">Чт</string>
+    <string name="day_fri">Пт</string>
+    <string name="day_sat">Сб</string>
+    <string name="day_sun">Нд</string>
+    <string name="target_count_label">Цільова кількість</string>
+    <string name="save_habit_button">Зберегти звичку</string>
+    <string name="custom_frequency_format">Інше (%1$d днів)</string>
+
+    <string name="add_habit_desc">Додати звичку</string>
+    <string name="calendar_title">Розклад</string>
+    <string name="today_label">Сьогодні</string>
+    <string name="status_completed">Виконано</string>
+    <string name="status_missed">Пропущено</string>
+    <string name="status_waiting">Очікує</string>
+    <string name="stats_title">Статистика</string>
+    <string name="edit_habit_desc">Редагувати звичку</string>
+    <string name="delete_desc">Видалити</string>
+    <string name="favorite_desc">Улюблене</string>
+    <string name="habit_frequency_prefix">Частота: %1$s</string>
+    <string name="dashboard_date_format">EEEE, d MMMM</string>
+
+    <string name="stepper_decrease">Зменшити</string>
+    <string name="stepper_increase">Збільшити</string>
+    <string name="hello_android">Привіт, %1$s!</string>
+</resources>
