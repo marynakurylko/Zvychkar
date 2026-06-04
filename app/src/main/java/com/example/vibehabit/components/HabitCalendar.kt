@@ -1,6 +1,7 @@
 package com.example.vibehabit.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +26,7 @@ import kotlin.math.ceil
 fun HabitCalendar(
     completedDates: Set<String>,
     habitColor: Color,
+    onDayClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val currentMonth = YearMonth.now()
@@ -92,6 +94,7 @@ fun HabitCalendar(
                             val dateStr = date.toString()
                             val isCompleted = completedDates.contains(dateStr)
                             val isToday = date == LocalDate.now()
+                            val isPastOrToday = !date.isAfter(LocalDate.now())
 
                             Box(
                                 modifier = Modifier
@@ -99,7 +102,12 @@ fun HabitCalendar(
                                     .aspectRatio(1f) // Робить клітинку ідеально квадратною
                                     .padding(4.dp)
                                     .clip(CircleShape)
-                                    // Якщо день виконано - зафарбовуємо кольором звички
+                                    .let {
+                                        // Робимо кружечок клікабельним тільки для минулого і сьогодні
+                                        if (isPastOrToday) {
+                                            it.clickable { onDayClick(dateStr) }
+                                        } else it
+                                    }
                                     .background(
                                         when {
                                             isCompleted -> habitColor

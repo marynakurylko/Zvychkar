@@ -1,0 +1,177 @@
+package com.example.vibehabit.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.vibehabit.viewmodels.HabitsViewModel
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CalendarScreen(viewModel: HabitsViewModel) {
+    // Реактивний стан для обраної дати (за замовчуванням - сьогодні)
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val habits by viewModel.habits.collectAsState()
+
+    // Генеруємо список із 14 днів (7 днів до сьогодні і 7 після)
+    val dates = remember {
+        val today = LocalDate.now()
+        (-7..7L).map { today.plusDays(it) }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Розклад", fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // 1. Горизонтальний календар (Скляний ефект)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(vertical = 16.dp)
+            ) {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
+                ) {
+                    items(dates) { date ->
+                        val isSelected = date == selectedDate
+                        val isToday = date == LocalDate.now()
+                        val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("uk", "UA"))
+
+                        Column(
+                            modifier = Modifier
+                                .width(56.dp)
+                                .height(72.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                .clickable { selectedDate = date }
+                                .padding(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = dayOfWeek.replaceFirstChar { it.uppercase() },
+                                fontSize = 12.sp,
+                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = date.dayOfMonth.toString(),
+                                fontSize = 18.sp,
+                                fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 2. Список звичок для обраного дня
+            Text(
+                text = if (selectedDate == LocalDate.now()) "Сьогодні" else selectedDate.toString(),
+                modifier = Modifier.padding(horizontal = 16.dp),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                items(habits) { habit ->
+                    val isCompletedOnSelectedDate = habit.completedDates.contains(selectedDate.toString())
+
+                    // Використовуємо спрощену версію картки або нашу існуючу
+                    // Для різноманітності зробимо тут красиву плашку статусу
+                    val habitColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
+                        .getOrDefault(MaterialTheme.colorScheme.surface)
+
+                    val isPastOrToday = !selectedDate.isAfter(LocalDate.now())
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                            // Якщо це минуле або сьогодні - робимо рядок клікабельним!
+                            .let {
+                                if (isPastOrToday) {
+                                    it.clickable {
+                                        viewModel.toggleHabitCompletion(habit.id, selectedDate.toString())
+                                    }
+                                } else it
+                            }
+                            .background(
+                                color = if (isCompletedOnSelectedDate) habitColor.copy(alpha = 0.15f)
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = habit.name,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        if (isCompletedOnSelectedDate) {
+                            Box(
+                                modifier = Modifier
+                                    .background(habitColor, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Text("Виконано", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            // Якщо це майбутнє, пишемо "Очікує", інакше "Пропущено"
+                            Text(
+                                text = if (isPastOrToday) "Пропущено" else "Очікує",
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

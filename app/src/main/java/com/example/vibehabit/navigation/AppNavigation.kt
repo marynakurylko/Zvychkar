@@ -20,6 +20,7 @@ import com.example.vibehabit.viewmodels.HabitsViewModel
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.vibehabit.screens.CalendarScreen
 import com.example.vibehabit.screens.HabitDetailsScreen
 
 @Composable
@@ -115,9 +116,7 @@ fun AppNavigation(
             }
 
             composable("calendar") {
-                // TODO: Тут буде наш крутий календар у майбутньому!
-                // Поки що просто показуємо пустий екран або текст
-                Text("Екран Календаря (в розробці)", modifier = Modifier.padding(16.dp))
+                CalendarScreen(viewModel = viewModel)
             }
 
             composable("settings") {

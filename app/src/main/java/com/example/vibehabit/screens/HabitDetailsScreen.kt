@@ -104,7 +104,10 @@ fun HabitDetailsScreen(
             // Наш новий Календар!
             HabitCalendar(
                 completedDates = habit.completedDates,
-                habitColor = headerColor
+                habitColor = headerColor,
+                onDayClick = { clickedDateStr ->
+                    viewModel.toggleHabitCompletion(habitId = habit.id, dateStr = clickedDateStr)
+                }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
