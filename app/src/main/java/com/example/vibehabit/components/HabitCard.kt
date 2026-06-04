@@ -14,68 +14,151 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.toColorInt
 import com.example.vibehabit.Habit
 import com.example.vibehabit.ui.theme.HabitTrackerTheme
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.foundation.clickable
+import java.time.LocalDate
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HabitCard(
-    habit: Habit,
-    onCheckedChange: (Boolean) -> Unit,
-    onFavoriteClick: () -> Unit,
-    modifier: Modifier = Modifier
+fun HabitCard(    habit: Habit,
+                  onCheckedChange: (Boolean) -> Unit,
+                  onFavoriteClick: () -> Unit,
+                  onDeleteClick: () -> Unit,
+                  onCardClick: () -> Unit,
+                  modifier: Modifier = Modifier
 ) {
-    // Uses the KTX extension to safely parse the hex color
-    val cardColor = runCatching { Color(habit.colorHex.toColorInt()) }
-        .getOrDefault(MaterialTheme.colorScheme.surface)
+    // Визначаємо, чи виконана звичка сьогодні
+    val today = LocalDate.now().toString()
+    val isCompletedToday = habit.completedDates.contains(today)
 
-    Card(
+    // 1. Анімація прозорості ТІЛЬКИ для внутрішнього контенту
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (isCompletedToday) 0.5f else 1f,
+        label = "contentAlpha"
+    )
+
+    val textDecoration = if (isCompletedToday) TextDecoration.LineThrough else TextDecoration.None
+
+    val baseColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
+        .getOrDefault(MaterialTheme.colorScheme.primary)
+
+    // 2. Колір фону картки. Робимо його світлішим для виконаних, але він залишається НЕПРОЗОРИМ (завдяки compositeOver)
+    val containerColor = if (isCompletedToday) {
+        baseColor.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface)
+    } else {
+        baseColor.copy(alpha = 0.18f).compositeOver(MaterialTheme.colorScheme.surface)
+    }
+
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { dismissValue ->
+            if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                onDeleteClick()
+                true
+            } else false
+        }
+    )
+
+    // 3. Оптимізована перевірка свайпу: червоний фон з'являється ТІЛЬКИ при русі вліво
+    val isSwipingToDismiss = dismissState.targetValue == SwipeToDismissBoxValue.EndToStart && dismissState.progress > 0.05f
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 6.dp)
+                    .clickable { onCardClick() }
+                    .background(
+                        // Фон стає червоним тільки якщо тягнемо вліво
+                        color = if (isSwipingToDismiss) Color.Red.copy(alpha = 0.8f) else Color.Transparent,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(end = 24.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                if (isSwipingToDismiss) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Delete",
+                        tint = Color.White
+                    )
+                }
+            }
+        },
         modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = cardColor.copy(alpha = 0.15f)
-        )
     ) {
-        Row(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(all = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(vertical = 6.dp)
+                .clickable { onCardClick() },
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = if (isCompletedToday) 0.dp else 2.dp)
         ) {
-            IconButton(onClick = onFavoriteClick) {
-                Icon(
-                    // Icons.Outlined.StarBorder requires the extended icons library
-                    imageVector = if (habit.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                    contentDescription = "Favorite",
-                    tint = if (habit.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray
-                )
-            }
-
-            Column(
+            // 4. Застосовуємо alpha ТІЛЬКИ до Row (контенту)
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth()
+                    .padding(all = 16.dp)
+                    .alpha(contentAlpha), // Тепер прозорим стає текст і кнопки, а не фон картки
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = habit.name,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+                IconButton(onClick = onFavoriteClick) {
+                    Icon(
+                        imageVector = if (habit.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        contentDescription = "Favorite",
+                        tint = if (habit.isFavorite) baseColor else Color.Gray
+                    )
+                }
 
-            Checkbox(
-                checked = habit.isCompleted,
-                onCheckedChange = onCheckedChange,
-                colors = CheckboxDefaults.colors(
-                    checkedColor = MaterialTheme.colorScheme.primary
-                )
-            )
+                Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                    Text(
+                        text = habit.name,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textDecoration = textDecoration
+                    )
+                }
+                
+                val progress = (habit.completedDates.size.toFloat() / habit.targetDays).coerceAtMost(1f)
+                Box(contentAlignment = Alignment.Center) {
+                    // Кільце прогресу (на тлі)
+                    CircularProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.size(48.dp), // Трохи більше за чекбокс
+                        color = baseColor,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        strokeWidth = 3.dp,
+                    )
+
+                    // Сам чекбокс (поверх кільця)
+                    Checkbox(
+                        checked = isCompletedToday,
+                        onCheckedChange = onCheckedChange,
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = baseColor, // Робимо галочку під колір звички!
+                            checkmarkColor = Color.White
+                        )
+                    )
+                }
+            }
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
@@ -90,7 +173,9 @@ fun HabitCardPreview() {
                 colorHex = "#8A2BE2"
             ),
             onCheckedChange = {},
-            onFavoriteClick = {}
+            onFavoriteClick = {},
+            onDeleteClick = {},
+            onCardClick = {}
         )
     }
 }
