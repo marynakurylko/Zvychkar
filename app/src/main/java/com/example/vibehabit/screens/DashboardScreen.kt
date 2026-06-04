@@ -32,6 +32,7 @@ import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.example.vibehabit.components.DailySummaryCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +69,9 @@ fun DashboardScreen(
         position = Position.Relative(0.5, 0.3)
     )
 
+    val totalHabitsToday = sortedHabits.size
+    val completedHabitsToday = sortedHabits.count { it.completedDates.contains(todayStr) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -101,12 +105,11 @@ fun DashboardScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 item {
-                    Text(
-                        text = dateText,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(bottom = 16.dp, start = 4.dp)
+                    DailySummaryCard(
+                        dateText = dateText,
+                        completedCount = completedHabitsToday,
+                        totalCount = totalHabitsToday,
+                        modifier = Modifier.padding(bottom = 24.dp)
                     )
                 }
 
@@ -118,14 +121,21 @@ fun DashboardScreen(
                         habit = habit,
                         onCheckedChange = {
                             if (!isCompletedToday) {
-                                showConfetti = true
+                                val isLastForToday = (completedHabitsToday + 1) == totalHabitsToday
+
+                                val isTargetReached = (habit.completedDates.size + 1) == habit.targetDays
+
+                                if (isLastForToday || isTargetReached) {
+                                    showConfetti = true
+                                }
                             }
-                            viewModel.toggleHabitCompletion(habit.id)
+                            // Зберігаємо стан у ViewModel
+                            viewModel.toggleHabitCompletion(habit.id, todayStr)
                         },
                         onFavoriteClick = { viewModel.toggleHabitFavorite(habit.id) },
                         onDeleteClick = { viewModel.deleteHabit(habit.id) },
                         onCardClick = { onHabitClick(habit.id) },
-                        // ДОДАНО АНІМАЦІЮ ПЕРЕМІЩЕННЯ
+
                         modifier = Modifier.animateItem()
                     )
                 }

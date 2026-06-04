@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.components.HabitCalendar
 import com.example.vibehabit.viewmodels.HabitsViewModel
+import com.example.vibehabit.components.NeonProgressRing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +36,9 @@ fun HabitDetailsScreen(
 
     // Додаємо скрол, щоб екран красиво прокручувався на маленьких телефонах
     val scrollState = rememberScrollState()
+
+    val totalCompleted = habit.completedDates.size
+    val progress = (totalCompleted.toFloat() / habit.targetDays).coerceAtMost(1f)
 
     Scaffold(
         topBar = {
@@ -62,44 +66,68 @@ fun HabitDetailsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Шапка
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(headerColor.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = habit.name,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = headerColor,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-            }
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .background(headerColor.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
+//                    .padding(32.dp),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Text(
+//                    text = habit.name,
+//                    fontSize = 24.sp,
+//                    fontWeight = FontWeight.Bold,
+//                    color = headerColor,
+//                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+//                )
+//            }
+//
+//            Spacer(modifier = Modifier.height(24.dp))
+//
+//            // Ряд зі швидкою статистикою
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.spacedBy(16.dp)
+//            ) {
+//                // Міні-картка "Всього разів"
+//                StatCard(
+//                    title = "Всього виконано",
+//                    value = "${habit.completedDates.size} днів",
+//                    modifier = Modifier.weight(1f)
+//                )
+//                // Можна додати ще метрики в майбутньому (наприклад, "Найдовша серія")
+//                StatCard(
+//                    title = "Статус сьогодні",
+//                    value = if (habit.completedDates.contains(java.time.LocalDate.now().toString())) "Виконано 🔥" else "Очікує ⏳",
+//                    modifier = Modifier.weight(1f)
+//                )
+//            }
+//
+//            Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
+            NeonProgressRing(
+                progress = progress,
+                color = headerColor,
+                centerText = "$totalCompleted / ${habit.targetDays}",
+                subtitle = "Виконано",
+                modifier = Modifier.padding(vertical = 32.dp)
+            )
 
-            // Ряд зі швидкою статистикою
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Міні-картка "Всього разів"
-                StatCard(
-                    title = "Всього виконано",
-                    value = "${habit.completedDates.size} днів",
-                    modifier = Modifier.weight(1f)
-                )
-                // Можна додати ще метрики в майбутньому (наприклад, "Найдовша серія")
-                StatCard(
-                    title = "Статус сьогодні",
-                    value = if (habit.completedDates.contains(java.time.LocalDate.now().toString())) "Виконано 🔥" else "Очікує ⏳",
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // Заголовок звички
+            Text(
+                text = habit.name,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Частота: ${habit.frequency}",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
+            )
 
             // Наш новий Календар!
             HabitCalendar(
