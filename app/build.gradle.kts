@@ -64,4 +64,7 @@ dependencies {
     
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("nl.dionsegijn:konfetti-compose:2.0.4")
+
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.gson)
 }

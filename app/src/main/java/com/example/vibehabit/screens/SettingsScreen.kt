@@ -1,35 +1,30 @@
 package com.example.vibehabit.screens
 
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
-import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vibehabit.R
 import com.example.vibehabit.components.SegmentedControl
+import com.example.vibehabit.viewmodels.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit
+    onThemeChange: (Boolean) -> Unit,
+    viewModel: SettingsViewModel = viewModel()
 ) {
-    val currentLocale = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    val currentLanguage by viewModel.language.collectAsState(initial = "en")
 
     // Визначаємо, яка вкладка активна (0 - English, 1 - Українська)
-    var selectedLanguageIndex by remember {
-        mutableIntStateOf(if (currentLocale.contains("uk")) 1 else 0)
-    }
+    val selectedLanguageIndex = if (currentLanguage == "uk") 1 else 0
 
     val languages = listOf(
         stringResource(R.string.language_english),
@@ -39,7 +34,6 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                // Використовуємо локалізований рядок для заголовка
                 title = {
                     Text(
                         text = stringResource(R.string.settings_title),
@@ -79,7 +73,6 @@ fun SettingsScreen(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium
                     )
-                    // Сучасний перемикач
                     Switch(
                         checked = isDarkTheme,
                         onCheckedChange = onThemeChange,
@@ -90,6 +83,8 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
@@ -102,11 +97,8 @@ fun SettingsScreen(
                     items = languages,
                     selectedIndex = selectedLanguageIndex,
                     onItemSelection = { index ->
-                        selectedLanguageIndex = index
-                        // Магія перемикання мови
                         val languageTag = if (index == 1) "uk" else "en"
-                        val appLocale = LocaleListCompat.forLanguageTags(languageTag)
-                        AppCompatDelegate.setApplicationLocales(appLocale)
+                        viewModel.setLanguage(languageTag)
                     }
                 )
             }
