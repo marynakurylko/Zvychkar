@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.vibehabit.R
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.example.vibehabit.screens.AnalyticsScreen
 import com.example.vibehabit.screens.OnboardingScreen
 
 @Composable
@@ -48,7 +50,7 @@ fun AppNavigation(
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
 
-            if (currentRoute != "onboarding" && currentRoute in listOf("dashboard", "calendar", "settings")) {
+            if (currentRoute != "onboarding" && currentRoute in listOf("dashboard", "calendar", "analytics", "settings")) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 8.dp
@@ -80,6 +82,20 @@ fun AppNavigation(
                             indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         )
                     )
+
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Filled.PieChart, contentDescription = stringResource(R.string.nav_analytics_desc)) },
+                        label = { Text(stringResource(R.string.nav_analytics_label)) },
+                        selected = currentRoute == "analytics",
+                        onClick = {
+                            if (currentRoute != "analytics") navController.navigate("analytics")
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        )
+                    )
+
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.nav_settings_desc)) },
                         label = { Text(stringResource(R.string.nav_settings_label)) },
@@ -135,6 +151,10 @@ fun AppNavigation(
 
             composable("calendar") {
                 CalendarScreen(viewModel = viewModel)
+            }
+
+            composable("analytics") {
+                AnalyticsScreen(viewModel = viewModel)
             }
 
             composable("settings") {

@@ -12,6 +12,8 @@
     <string name="nav_calendar_label">Календар</string>
     <string name="nav_settings_desc">Налаштування</string>
     <string name="nav_settings_label">Налаштування</string>
+    <string name="nav_analytics_label">Аналітика</string>
+    <string name="nav_analytics_desc">Аналітика</string>
 
     <string name="create_habit_title">Створити звичку</string>
     <string name="edit_habit_title">Редагувати звичку</string>

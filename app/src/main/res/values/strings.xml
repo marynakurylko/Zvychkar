@@ -12,6 +12,9 @@
     <string name="nav_calendar_label">Calendar</string>
     <string name="nav_settings_desc">Settings</string>
     <string name="nav_settings_label">Settings</string>
+    <string name="nav_analytics_label">Analytics</string>
+    <string name="nav_analytics_desc">Analytics</string>
+
 
     <string name="create_habit_title">Create Habit</string>
     <string name="edit_habit_title">Edit Habit</string>

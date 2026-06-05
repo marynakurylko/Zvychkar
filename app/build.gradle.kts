@@ -69,4 +69,6 @@ dependencies {
     implementation(libs.gson)
     // Splash Screen API
     implementation(libs.androidx.core.splashscreen)
+
+    implementation(libs.androidx.glance.appwidget)
 }

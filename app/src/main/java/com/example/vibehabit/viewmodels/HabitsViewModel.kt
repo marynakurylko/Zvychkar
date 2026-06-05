@@ -17,11 +17,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import androidx.glance.appwidget.updateAll
+import com.example.vibehabit.widget.HabitWidget
 
-// Створюємо інстанс DataStore на рівні файлу
 val Context.dataStore by preferencesDataStore(name = "habits_prefs")
 
-// Успадковуємося від AndroidViewModel для доступу до Context
 class HabitsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dataStore = application.dataStore
@@ -29,13 +32,11 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     private val gson = Gson()
 
     private val THEME_KEY = stringPreferencesKey("app_theme_mode")
-
     private val ONBOARDING_KEY = booleanPreferencesKey("is_onboarding_completed")
 
     private val _isOnboardingCompleted = MutableStateFlow<Boolean?>(null)
     val isOnboardingCompleted: StateFlow<Boolean?> = _isOnboardingCompleted.asStateFlow()
 
-    // Для тестування додамо кілька дат виконання для першої звички (сьогодні і вчора)
     private val today = LocalDate.now().toString()
     private val yesterday = LocalDate.now().minusDays(1).toString()
 
@@ -45,18 +46,53 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
         Habit(id = 3, name = "Тренування (30 хв)", isFavorite = true, colorHex = "#FF9800", completedDates = emptySet())
     )
 
+    // Використовуємо надійний MutableStateFlow для гарантованої реактивності
     private val _habits = MutableStateFlow<List<Habit>>(emptyList())
     val habits: StateFlow<List<Habit>> = _habits.asStateFlow()
 
+    // Окремий стейт для Heatmap
+    private val _heatmapStats = MutableStateFlow<Map<LocalDate, Int>>(emptyMap())
+    val heatmapStats: StateFlow<Map<LocalDate, Int>> = _heatmapStats.asStateFlow()
+
     init {
-        // Читаємо тему ТА стан онбордингу
+        // Слухаємо тему та онбординг
         viewModelScope.launch {
             dataStore.data.collect { preferences ->
                 _isOnboardingCompleted.value = preferences[ONBOARDING_KEY] ?: false
             }
         }
 
-        loadHabits()
+        // ГОЛОВНИЙ СЛУХАЧ: Завжди читаємо базу. Якщо віджет змінить її - миттєво дізнаємося!
+        viewModelScope.launch {
+            dataStore.data.collect { preferences ->
+                val json = preferences[HABITS_KEY]
+                if (json != null) {
+                    val type = object : TypeToken<List<Habit>>() {}.type
+                    val parsed: List<Habit> = gson.fromJson(json, type) ?: emptyList()
+                    _habits.value = parsed
+                    updateHeatmap(parsed) // Оновлюємо статистику
+                } else {
+                    // Якщо база порожня (перший запуск)
+                    _habits.value = initialHabits
+                    saveHabits(initialHabits)
+                }
+            }
+        }
+    }
+
+    private fun updateHeatmap(habitsList: List<Habit>) {
+        val stats = mutableMapOf<LocalDate, Int>()
+        habitsList.forEach { habit ->
+            habit.completedDates.forEach { dateStr ->
+                try {
+                    val date = LocalDate.parse(dateStr)
+                    stats[date] = stats.getOrDefault(date, 0) + 1
+                } catch (e: Exception) {
+                    // Ігноруємо некоректні дати
+                }
+            }
+        }
+        _heatmapStats.value = stats
     }
 
     fun completeOnboarding() {
@@ -67,47 +103,31 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    private fun loadHabits() {
-        viewModelScope.launch {
-            val preferences = dataStore.data.first()
-            val json = preferences[HABITS_KEY]
-
-            if (json != null) {
-                // Якщо дані є в пам'яті — парсимо їх з JSON
-                val type = object : TypeToken<List<Habit>>() {}.type
-                val savedHabits: List<Habit> = gson.fromJson(json, type)
-                _habits.value = savedHabits
-            } else {
-                // Якщо це перший запуск застосунку — використовуємо твої тестові дані
-                _habits.value = initialHabits
-                // Одразу зберігаємо їх у базу
-                saveHabits(initialHabits)
-            }
-        }
-    }
-
-    // Централізована функція для оновлення стану та запису в DataStore
+    // Централізована функція: пише в базу і відправляє команду віджетам
     private fun saveHabits(newList: List<Habit>) {
-        _habits.value = newList // Миттєво оновлюємо UI
+        // Оптимістичне оновлення (миттєва реакція UI)
+        _habits.value = newList
+        updateHeatmap(newList)
 
         viewModelScope.launch {
             val json = gson.toJson(newList)
             dataStore.edit { preferences ->
-                preferences[HABITS_KEY] = json // Фоново записуємо на диск
+                preferences[HABITS_KEY] = json
             }
+            // Штовхаємо віджет, щоб він перемалювався
+            HabitWidget().updateAll(getApplication<Application>())
         }
     }
 
-    // НОВА логіка виконання: тепер ми відмічаємо звичку для конкретної дати
     fun toggleHabitCompletion(habitId: Int, dateStr: String = LocalDate.now().toString()) {
         val currentList = _habits.value
         val newList = currentList.map { habit ->
             if (habit.id == habitId) {
                 val newDates = habit.completedDates.toMutableSet()
                 if (newDates.contains(dateStr)) {
-                    newDates.remove(dateStr) // Якщо вже виконано в цей день — знімаємо відмітку
+                    newDates.remove(dateStr)
                 } else {
-                    newDates.add(dateStr) // Якщо не виконано — додаємо дату
+                    newDates.add(dateStr)
                 }
                 habit.copy(completedDates = newDates)
             } else {
@@ -128,7 +148,6 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     private fun handleReminder(habitId: Int, habitName: String, reminderTime: String?) {
         val context = getApplication<Application>()
         if (reminderTime != null) {
-            // Розбиваємо "09:30" на 9 та 30
             val parts = reminderTime.split(":")
             if (parts.size == 2) {
                 val hour = parts[0].toIntOrNull() ?: 9
@@ -138,7 +157,6 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
                 )
             }
         } else {
-            // Якщо час null — скасовуємо попередній будильник
             com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(context, habitId)
         }
     }
@@ -149,11 +167,9 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
         val newHabit = Habit(
             id = newId, name = name, isFavorite = false, colorHex = colorHex,
             completedDates = emptySet(), iconName = iconName, targetDays = targetDays,
-            frequency = frequency, reminderTime = reminderTime // Зберігаємо час
+            frequency = frequency, reminderTime = reminderTime
         )
         saveHabits(currentList + newHabit)
-
-        // ВАЖЛИВО: Налаштовуємо пуш
         handleReminder(newId, name, reminderTime)
     }
 
@@ -168,7 +184,6 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             } else habit
         }
         saveHabits(newList)
-
         handleReminder(id, name, reminderTime)
     }
 
@@ -176,7 +191,6 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
         val currentList = _habits.value
         val newList = currentList.filter { it.id != habitId }
         saveHabits(newList)
-        // Скасовуємо при видаленні
         com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(getApplication<Application>(), habitId)
     }
 }
