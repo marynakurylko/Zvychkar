@@ -24,6 +24,9 @@ import com.example.vibehabit.screens.CalendarScreen
 import com.example.vibehabit.screens.HabitDetailsScreen
 import androidx.compose.ui.res.stringResource
 import com.example.vibehabit.R
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.vibehabit.screens.OnboardingScreen
 
 @Composable
 fun AppNavigation(
@@ -36,9 +39,16 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
+    if (isOnboardingCompleted == null) return
+    val startDestination = if (isOnboardingCompleted == true) "dashboard" else "onboarding"
+
     Scaffold(
         bottomBar = {
-            if (currentRoute in listOf("dashboard", "calendar", "settings")) {
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+
+            if (currentRoute != "onboarding" && currentRoute in listOf("dashboard", "calendar", "settings")) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 8.dp
@@ -88,9 +98,22 @@ fun AppNavigation(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "dashboard",
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable("onboarding") {
+                OnboardingScreen(
+                    onFinish = {
+                        // Відмічаємо в базі, що онбординг пройдено
+                        viewModel.completeOnboarding()
+                        // Переходимо на дашборд і чистимо історію, щоб не можна було повернутися назад
+                        navController.navigate("dashboard") {
+                            popUpTo("onboarding") { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable("dashboard") {
                 DashboardScreen(
                     viewModel = viewModel,

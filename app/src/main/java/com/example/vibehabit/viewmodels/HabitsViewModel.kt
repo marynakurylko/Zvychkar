@@ -2,6 +2,7 @@ package com.example.vibehabit.viewmodels
 
 import android.app.Application
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -27,6 +28,13 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     private val HABITS_KEY = stringPreferencesKey("habits_json")
     private val gson = Gson()
 
+    private val THEME_KEY = stringPreferencesKey("app_theme_mode")
+
+    private val ONBOARDING_KEY = booleanPreferencesKey("is_onboarding_completed")
+
+    private val _isOnboardingCompleted = MutableStateFlow<Boolean?>(null)
+    val isOnboardingCompleted: StateFlow<Boolean?> = _isOnboardingCompleted.asStateFlow()
+
     // Для тестування додамо кілька дат виконання для першої звички (сьогодні і вчора)
     private val today = LocalDate.now().toString()
     private val yesterday = LocalDate.now().minusDays(1).toString()
@@ -41,8 +49,22 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     val habits: StateFlow<List<Habit>> = _habits.asStateFlow()
 
     init {
-        // При старті відразу завантажуємо дані з пам'яті телефону
+        // Читаємо тему ТА стан онбордингу
+        viewModelScope.launch {
+            dataStore.data.collect { preferences ->
+                _isOnboardingCompleted.value = preferences[ONBOARDING_KEY] ?: false
+            }
+        }
+
         loadHabits()
+    }
+
+    fun completeOnboarding() {
+        viewModelScope.launch {
+            dataStore.edit { preferences ->
+                preferences[ONBOARDING_KEY] = true
+            }
+        }
     }
 
     private fun loadHabits() {
