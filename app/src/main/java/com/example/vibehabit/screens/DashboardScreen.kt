@@ -42,6 +42,7 @@ fun DashboardScreen(
     onHabitClick: (Int) -> Unit
 ) {
     val habits by viewModel.habits.collectAsState()
+    val username by viewModel.username.collectAsState()
     var showConfetti by remember { mutableStateOf(false) }
 
     val today = LocalDate.now()
@@ -76,9 +77,10 @@ fun DashboardScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.app_name),
+                        text = "Привіт, $username! 👋",
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 22.sp
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

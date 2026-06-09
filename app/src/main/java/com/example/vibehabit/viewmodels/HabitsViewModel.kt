@@ -67,7 +67,12 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             val currentUser = firebaseAuth.currentUser
             if (currentUser != null) {
                 _authState.value = AuthState.Authenticated(currentUser)
-                listenToHabits(currentUser.uid) // Підписуємось на хмару
+                listenToHabits(currentUser.uid)
+
+                if (_username.value == "Користувач" && currentUser.email != null) {
+                    val emailPrefix = currentUser.email!!.substringBefore("@")
+                    updateUsername(emailPrefix)
+                }
             } else {
                 _authState.value = AuthState.Unauthenticated
                 habitsListener?.remove()
