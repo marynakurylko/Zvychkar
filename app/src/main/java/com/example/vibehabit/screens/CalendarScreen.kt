@@ -111,63 +111,81 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                items(habits) { habit ->
-                    val isCompletedOnSelectedDate = habit.completedDates.contains(selectedDate.toString())
-                    val habitColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
-                        .getOrDefault(MaterialTheme.colorScheme.surface)
+            if (habits.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 40.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    Text(
+                        text = "Поки порожньо, але це легко виправити, додавши нову звичку! ✨",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 16.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                }
+            } else {
+                // ТВІЙ ІСНУЮЧИЙ СПИСОК ЗВИЧОК
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    items(habits) { habit ->
+                        val isCompletedOnSelectedDate = habit.completedDates.contains(selectedDate.toString())
+                        val habitColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
+                            .getOrDefault(MaterialTheme.colorScheme.surface)
 
-                    val isPastOrToday = !selectedDate.isAfter(LocalDate.now())
+                        val isPastOrToday = !selectedDate.isAfter(LocalDate.now())
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp)
-                            .let {
-                                if (isPastOrToday) {
-                                    it.clickable {
-                                        viewModel.toggleHabitCompletion(habit.id, selectedDate.toString())
-                                    }
-                                } else it
-                            }
-                            .background(
-                                color = if (isCompletedOnSelectedDate) habitColor.copy(alpha = 0.15f)
-                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                shape = RoundedCornerShape(16.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp)
+                                .let {
+                                    if (isPastOrToday) {
+                                        it.clickable {
+                                            viewModel.toggleHabitCompletion(habit.id, selectedDate.toString())
+                                        }
+                                    } else it
+                                }
+                                .background(
+                                    color = if (isCompletedOnSelectedDate) habitColor.copy(alpha = 0.15f)
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = habit.name,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = habit.name,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
 
-                        if (isCompletedOnSelectedDate) {
-                            Box(
-                                modifier = Modifier
-                                    .background(habitColor, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                            ) {
+                            if (isCompletedOnSelectedDate) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(habitColor, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.status_completed),
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            } else {
                                 Text(
-                                    text = stringResource(R.string.status_completed),
-                                    color = Color.White,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
+                                    text = if (isPastOrToday) stringResource(R.string.status_missed) else stringResource(R.string.status_waiting),
+                                    color = Color.Gray,
+                                    fontSize = 12.sp
                                 )
                             }
-                        } else {
-                            Text(
-                                text = if (isPastOrToday) stringResource(R.string.status_missed) else stringResource(R.string.status_waiting),
-                                color = Color.Gray,
-                                fontSize = 12.sp
-                            )
                         }
                     }
                 }

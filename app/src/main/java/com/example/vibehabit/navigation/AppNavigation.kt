@@ -29,6 +29,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.example.vibehabit.screens.AnalyticsScreen
 import com.example.vibehabit.screens.OnboardingScreen
+import com.example.vibehabit.auth.AuthState
+import com.example.vibehabit.screens.SignInScreen
 
 @Composable
 fun AppNavigation(
@@ -42,8 +44,13 @@ fun AppNavigation(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
+    val authState by viewModel.authState.collectAsState()
     if (isOnboardingCompleted == null) return
-    val startDestination = if (isOnboardingCompleted == true) "dashboard" else "onboarding"
+    val startDestination = when {
+        authState is AuthState.Unauthenticated -> "signin"
+        isOnboardingCompleted == false -> "onboarding"
+        else -> "dashboard"
+    }
 
     Scaffold(
         bottomBar = {
@@ -117,6 +124,18 @@ fun AppNavigation(
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable("signin") {
+                SignInScreen(viewModel = viewModel)
+
+                LaunchedEffect(authState) {
+                    if (authState is AuthState.Authenticated) {
+                        val destination = if (isOnboardingCompleted == true) "dashboard" else "onboarding"
+                        navController.navigate(destination) {
+                            popUpTo("signin") { inclusive = true }
+                        }
+                    }
+                }
+            }
             composable("onboarding") {
                 OnboardingScreen(
                     onFinish = {

@@ -13,15 +13,23 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vibehabit.R
 import com.example.vibehabit.components.SegmentedControl
 import com.example.vibehabit.viewmodels.SettingsViewModel
+import com.example.vibehabit.viewmodels.HabitsViewModel
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.text.TextStyle
+import com.example.vibehabit.components.ProfileBlock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
-    viewModel: SettingsViewModel = viewModel()
+    habitsViewModel: HabitsViewModel = viewModel(),
+    settingsViewModel: SettingsViewModel = viewModel()
 ) {
-    val currentLanguage by viewModel.language.collectAsState(initial = "en")
+    val currentLanguage by settingsViewModel.language.collectAsState(initial = "en")
 
     // Визначаємо, яка вкладка активна (0 - English, 1 - Українська)
     val selectedLanguageIndex = if (currentLanguage == "uk") 1 else 0
@@ -54,6 +62,8 @@ fun SettingsScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+            ProfileBlock(viewModel = habitsViewModel)
+            Spacer(modifier = Modifier.height(24.dp))
             // Картка з налаштуванням теми
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -98,7 +108,7 @@ fun SettingsScreen(
                     selectedIndex = selectedLanguageIndex,
                     onItemSelection = { index ->
                         val languageTag = if (index == 1) "uk" else "en"
-                        viewModel.setLanguage(languageTag)
+                        settingsViewModel.setLanguage(languageTag)
                     }
                 )
             }

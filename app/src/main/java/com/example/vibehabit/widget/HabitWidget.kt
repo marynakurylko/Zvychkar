@@ -1,13 +1,14 @@
 package com.example.vibehabit.widget
 
 import android.content.Context
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.ActionParameters
@@ -30,37 +31,36 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.text.TextDecoration
 import com.example.vibehabit.Habit
-import com.example.vibehabit.viewmodels.dataStore
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.flow.first
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalDate
 
-// Ключі виносимо на рівень файлу, щоб і віджет, і Action мали до них доступ
 val HABIT_ID_KEY = ActionParameters.Key<Int>("habit_id")
-val HABITS_KEY = stringPreferencesKey("habits_json")
 
 class HabitWidget : GlanceAppWidget() {
 
-    private val gson = Gson()
-
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        // Отримуємо початковий стан ДО запуску UI
-        val initialPrefs = context.dataStore.data.first()
-
         provideContent {
-            val preferences by context.dataStore.data.collectAsState(initial = initialPrefs)
-            val json = preferences[HABITS_KEY]
-
-            // Якщо даних немає, повертаємо порожній список
-            val habits: List<Habit> = if (json != null) {
-                val type = object : TypeToken<List<Habit>>() {}.type
-                gson.fromJson(json, type)
-            } else {
-                emptyList()
-            }
-
+            var habits by remember { mutableStateOf<List<Habit>>(emptyList()) }
+            val currentUser = FirebaseAuth.getInstance().currentUser
             val todayStr = LocalDate.now().toString()
+
+            // Підвантажуємо дані з Firestore для віджета
+            LaunchedEffect(currentUser) {
+                if (currentUser != null) {
+                    FirebaseFirestore.getInstance().collection("users")
+                        .document(currentUser.uid)
+                        .collection("habits")
+                        .addSnapshotListener { snapshot, _ ->
+                            if (snapshot != null) {
+                                habits = snapshot.documents.mapNotNull { it.toObject(Habit::class.java) }.sortedBy { it.id }
+                            }
+                        }
+                } else {
+                    habits = emptyList()
+                }
+            }
 
             Column(
                 modifier = GlanceModifier
@@ -79,19 +79,20 @@ class HabitWidget : GlanceAppWidget() {
 
                 Spacer(modifier = GlanceModifier.height(12.dp))
 
-                if (habits.isEmpty()) {
+                if (currentUser == null) {
+                    Text(
+                        text = "Будь ласка, увійдіть у застосунок",
+                        style = TextStyle(color = ColorProvider(day = Color.Gray, night = Color.Gray), fontSize = 14.sp)
+                    )
+                } else if (habits.isEmpty()) {
                     Text(
                         text = "На сьогодні планів немає!",
-                        style = TextStyle(
-                            color = ColorProvider(day = Color.Gray, night = Color.Gray),
-                            fontSize = 14.sp
-                        )
+                        style = TextStyle(color = ColorProvider(day = Color.Gray, night = Color.Gray), fontSize = 14.sp)
                     )
                 } else {
                     LazyColumn {
                         items(habits) { habit ->
                             val isCompletedToday = habit.completedDates.contains(todayStr)
-
                             val toggleAction = actionRunCallback<ToggleHabitAction>(
                                 actionParametersOf(HABIT_ID_KEY to habit.id)
                             )
@@ -134,30 +135,28 @@ class HabitWidget : GlanceAppWidget() {
 class ToggleHabitAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val habitId = parameters[HABIT_ID_KEY] ?: return
-        val dataStore = context.dataStore
-        val gson = Gson()
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val todayStr = LocalDate.now().toString()
+        val firestore = FirebaseFirestore.getInstance()
 
-        dataStore.edit { prefs ->
-            val json = prefs[HABITS_KEY]
-            val habits: List<Habit> = if (json != null) {
-                val type = object : TypeToken<List<Habit>>() {}.type
-                gson.fromJson(json, type)
-            } else {
-                emptyList()
-            }
+        val docRef = firestore.collection("users").document(currentUser.uid)
+            .collection("habits").document(habitId.toString())
 
-            val updatedHabits = habits.map { habit ->
-                if (habit.id == habitId) {
-                    val newDates = habit.completedDates.toMutableSet()
-                    if (newDates.contains(todayStr)) newDates.remove(todayStr) else newDates.add(todayStr)
-                    habit.copy(completedDates = newDates)
-                } else habit
-            }
-            prefs[HABITS_KEY] = gson.toJson(updatedHabits)
+        try {
+            // Читаємо поточний документ синхронно у фоні
+            val docSnapshot = Tasks.await(docRef.get())
+            val habit = docSnapshot.toObject(Habit::class.java) ?: return
+
+            val newDates = habit.completedDates.toMutableList()
+            if (newDates.contains(todayStr)) newDates.remove(todayStr) else newDates.add(todayStr)
+
+            // Записуємо оновлені дані у Firestore
+            Tasks.await(docRef.update("completedDates", newDates))
+
+            // Кажемо віджету оновити UI
+            HabitWidget().updateAll(context)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-
-        // Оновлюємо всі екземпляри віджета
-        HabitWidget().updateAll(context)
     }
 }

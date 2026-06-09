@@ -153,7 +153,7 @@ fun HabitDetailsScreen(
             }
 
             HabitCalendar(
-                completedDates = habit.completedDates,
+                completedDates = habit.completedDates.toSet(),
                 habitColor = headerColor,
                 onDayClick = { clickedDateStr ->
                     viewModel.toggleHabitCompletion(habitId = habit.id, dateStr = clickedDateStr)
