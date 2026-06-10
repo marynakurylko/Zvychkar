@@ -45,6 +45,15 @@ fun AppNavigation(
 
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
     val authState by viewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Unauthenticated && currentRoute != "signin") {
+            navController.navigate("signin") {
+                popUpTo(0)
+            }
+        }
+    }
+
     if (isOnboardingCompleted == null) return
     val startDestination = when {
         authState is AuthState.Unauthenticated -> "signin"
@@ -179,7 +188,8 @@ fun AppNavigation(
             composable("settings") {
                 SettingsScreen(
                     isDarkTheme = isDarkTheme,
-                    onThemeChange = onThemeChange
+                    onThemeChange = onThemeChange,
+                    habitsViewModel = viewModel
                 )
             }
 

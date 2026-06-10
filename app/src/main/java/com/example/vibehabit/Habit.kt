@@ -7,7 +7,7 @@ data class Habit(
     val name: String = "",
     val isFavorite: Boolean = false,
     val colorHex: String = "",
-    val completedDates: List<String> = emptyList(),
+    val completedDates: List<String> = emptyList(), // Переведено в List для Firestore
     val targetDays: Int = 7,
     val iconName: String = "Bolt",
     val frequency: String = "Daily",
@@ -16,7 +16,6 @@ data class Habit(
     val currentStreak: Int
         get() {
             if (completedDates.isEmpty()) return 0
-
             val dates = completedDates.map { LocalDate.parse(it) }.sortedDescending()
             var streak = 0
             var currentDate = LocalDate.now()
@@ -44,7 +43,6 @@ data class Habit(
     val bestStreak: Int
         get() {
             if (completedDates.isEmpty()) return 0
-
             val dates = completedDates.map { LocalDate.parse(it) }.sorted()
             var maxStreak = 1
             var tempStreak = 1

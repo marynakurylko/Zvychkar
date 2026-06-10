@@ -38,6 +38,9 @@ fun SettingsScreen(
 
     // Стан для показу модалки підтвердження виходу
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var authErrorMessage by remember { mutableStateOf<String?>(null) }
+    var deletionErrorByFirebase by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -129,6 +132,29 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Вийти з акаунта", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
+            TextButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Видалити акаунт назавжди",
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            // Відображення помилки безпеки (якщо треба перелогінитись)
+            if (authErrorMessage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = authErrorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
         }
 
         // Модалка підтвердження
@@ -154,6 +180,62 @@ fun SettingsScreen(
                 dismissButton = {
                     TextButton(onClick = { showLogoutDialog = false }) {
                         Text("Скасувати", color = MaterialTheme.colorScheme.primary)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = {
+                    Text("💥 Незворотна дія!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                },
+                text = {
+                    Text("Ви впевнені, що хочете видалити акаунт? Усі ваші створені звички, налаштування та історія стріків у хмарі будуть знищені назавжди без можливості відновлення.")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+                            deletionErrorByFirebase = null // Скидаємо попередній стан
+                            habitsViewModel.deleteAccount(
+                                onSuccess = {
+                                    habitsViewModel.signOut()
+                                },
+                                onError = { errorText ->
+                                    deletionErrorByFirebase = errorText
+                                }
+                            )
+                        }
+                    ) {
+                        Text("Так, видалити назавжди", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Скасувати", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+
+        if (deletionErrorByFirebase != null) {
+            AlertDialog(
+                onDismissRequest = { deletionErrorByFirebase = null },
+                title = {
+                    Text("⚠️ Щось пішло не так", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                },
+                text = {
+                    Text(deletionErrorByFirebase!!)
+                },
+                confirmButton = {
+                    TextButton(onClick = { deletionErrorByFirebase = null }) {
+                        Text("Зрозуміло", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,

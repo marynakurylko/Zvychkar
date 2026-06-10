@@ -20,6 +20,12 @@ import com.example.vibehabit.auth.AuthState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.concurrent.ExecutionException
+import kotlinx.coroutines.tasks.await
+import android.util.Log
+import kotlinx.coroutines.NonCancellable
 
 val Context.dataStore by preferencesDataStore(name = "habits_prefs")
 
@@ -42,7 +48,6 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     private val _heatmapStats = MutableStateFlow<Map<LocalDate, Int>>(emptyMap())
     val heatmapStats: StateFlow<Map<LocalDate, Int>> = _heatmapStats.asStateFlow()
 
-    // Firebase
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
     private var habitsListener: ListenerRegistration? = null
@@ -51,14 +56,12 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     init {
-        // Слухаємо локальні налаштування (DataStore)
         viewModelScope.launch {
             dataStore.data.collect { preferences ->
                 _isOnboardingCompleted.value = preferences[ONBOARDING_KEY] ?: false
                 _username.value = preferences[USERNAME_KEY] ?: "Користувач"
             }
         }
-
         checkAuthState()
     }
 
@@ -69,6 +72,7 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
                 _authState.value = AuthState.Authenticated(currentUser)
                 listenToHabits(currentUser.uid)
 
+                // Якщо ім'я дефолтне, створюємо нікнейм з пошти
                 if (_username.value == "Користувач" && currentUser.email != null) {
                     val emailPrefix = currentUser.email!!.substringBefore("@")
                     updateUsername(emailPrefix)
@@ -84,7 +88,6 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun listenToHabits(userId: String) {
         habitsListener?.remove()
-
         habitsListener = firestore.collection("users")
             .document(userId)
             .collection("habits")
@@ -98,7 +101,6 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
                 _habits.value = habitsList
                 updateHeatmap(habitsList)
 
-                // Оновлюємо віджет після зміни в базі
                 viewModelScope.launch {
                     HabitWidget().updateAll(getApplication<Application>())
                 }
@@ -166,7 +168,6 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     fun updateHabit(id: Int, name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
         val userId = auth.currentUser?.uid ?: return
         val currentHabit = _habits.value.find { it.id == id }
-
         val updatedHabit = Habit(
             id = id, name = name, isFavorite = currentHabit?.isFavorite ?: false, colorHex = colorHex,
             completedDates = currentHabit?.completedDates ?: emptyList(),
@@ -182,12 +183,73 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
 
     fun deleteHabit(habitId: Int) {
         val userId = auth.currentUser?.uid ?: return
-
         firestore.collection("users").document(userId)
             .collection("habits").document(habitId.toString())
             .delete()
 
         com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(getApplication<Application>(), habitId)
+    }
+
+    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            onError("Користувач не знайдений у системі.")
+            return
+        }
+        val userId = currentUser.uid
+
+        viewModelScope.launch {
+            try {
+                Log.d("AuthDebug", "Початок видалення. UID: $userId")
+
+                // ЗАХИЩЕНИЙ БЛОК: Не буде скасований, навіть якщо екран закриється
+                withContext(NonCancellable) {
+                    val habitsRef = firestore.collection("users").document(userId).collection("habits")
+                    val snapshot = habitsRef.get().await()
+                    Log.d("AuthDebug", "Знайдено звичок для видалення: ${snapshot.documents.size}")
+
+                    val batch = firestore.batch()
+                    for (doc in snapshot.documents) {
+                        batch.delete(doc.reference)
+                    }
+                    batch.delete(firestore.collection("users").document(userId))
+
+                    batch.commit().await()
+                    Log.d("AuthDebug", "Дані Firestore успішно видалено")
+
+                    currentUser.delete().await()
+                    Log.d("AuthDebug", "Акаунт успішно видалено з Firebase Auth")
+                }
+
+                onSuccess()
+
+            } catch (e: Exception) {
+                Log.e("AuthDebug", "Помилка під час видалення", e)
+                val errorMessage = e.message ?: ""
+
+                if (e is com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException ||
+                    errorMessage.contains("CREDENTIAL_TOO_OLD_LOGIN_AGAIN") ||
+                    errorMessage.contains("recent login")) {
+
+                    onError("🔒 Для безпеки ця дія вимагає свіжого входу. Будь ласка, вийдіть з акаунта, увійдіть знову та повторіть видалення.")
+                } else {
+                    onError("Помилка: ${e.localizedMessage}")
+                }
+            }
+        }
+    }
+    fun signUpWithEmail(email: String, pass: String, onError: (String) -> Unit) {
+        auth.createUserWithEmailAndPassword(email, pass)
+            .addOnFailureListener { exception -> onError(exception.localizedMessage ?: "Помилка реєстрації") }
+    }
+
+    fun signInWithEmail(email: String, pass: String, onError: (String) -> Unit) {
+        auth.signInWithEmailAndPassword(email, pass)
+            .addOnFailureListener { exception -> onError(exception.localizedMessage ?: "Помилка входу") }
+    }
+
+    fun signOut() {
+        auth.signOut()
     }
 
     private fun handleReminder(habitId: Int, habitName: String, reminderTime: String?) {
@@ -204,19 +266,5 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
         } else {
             com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(context, habitId)
         }
-    }
-
-    fun signUpWithEmail(email: String, pass: String, onError: (String) -> Unit) {
-        auth.createUserWithEmailAndPassword(email, pass)
-            .addOnFailureListener { exception -> onError(exception.localizedMessage ?: "Помилка") }
-    }
-
-    fun signInWithEmail(email: String, pass: String, onError: (String) -> Unit) {
-        auth.signInWithEmailAndPassword(email, pass)
-            .addOnFailureListener { exception -> onError(exception.localizedMessage ?: "Помилка") }
-    }
-
-    fun signOut() {
-        auth.signOut()
     }
 }

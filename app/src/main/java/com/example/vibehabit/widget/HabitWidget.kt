@@ -46,7 +46,6 @@ class HabitWidget : GlanceAppWidget() {
             val currentUser = FirebaseAuth.getInstance().currentUser
             val todayStr = LocalDate.now().toString()
 
-            // Підвантажуємо дані з Firestore для віджета
             LaunchedEffect(currentUser) {
                 if (currentUser != null) {
                     FirebaseFirestore.getInstance().collection("users")
@@ -143,17 +142,13 @@ class ToggleHabitAction : ActionCallback {
             .collection("habits").document(habitId.toString())
 
         try {
-            // Читаємо поточний документ синхронно у фоні
             val docSnapshot = Tasks.await(docRef.get())
             val habit = docSnapshot.toObject(Habit::class.java) ?: return
 
             val newDates = habit.completedDates.toMutableList()
             if (newDates.contains(todayStr)) newDates.remove(todayStr) else newDates.add(todayStr)
 
-            // Записуємо оновлені дані у Firestore
             Tasks.await(docRef.update("completedDates", newDates))
-
-            // Кажемо віджету оновити UI
             HabitWidget().updateAll(context)
         } catch (e: Exception) {
             e.printStackTrace()
