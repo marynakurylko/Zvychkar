@@ -56,6 +56,9 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
+    private val _isEmailVerified = MutableStateFlow(true) // За замовчуванням true, щоб не блимало
+    val isEmailVerified: StateFlow<Boolean> = _isEmailVerified.asStateFlow()
+
     init {
         viewModelScope.launch {
             dataStore.data.collect { preferences ->
@@ -71,9 +74,9 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             val currentUser = firebaseAuth.currentUser
             if (currentUser != null) {
                 _authState.value = AuthState.Authenticated(currentUser)
+                _isEmailVerified.value = currentUser.isEmailVerified // ЗЧИТУЄМО СТАТУС
                 listenToHabits(currentUser.uid)
 
-                // Якщо ім'я дефолтне, створюємо нікнейм з пошти
                 if (_username.value == "Користувач" && currentUser.email != null) {
                     val emailPrefix = currentUser.email!!.substringBefore("@")
                     updateUsername(emailPrefix)
@@ -250,7 +253,47 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     }
     fun signUpWithEmail(email: String, pass: String, onError: (String) -> Unit) {
         auth.createUserWithEmailAndPassword(email, pass)
-            .addOnFailureListener { exception -> onError(exception.localizedMessage ?: "Помилка реєстрації") }
+            .addOnSuccessListener {
+                // Відправляємо лист одразу після успішної реєстрації
+                auth.currentUser?.sendEmailVerification()
+            }
+            .addOnFailureListener { exception ->
+                onError(exception.localizedMessage ?: "Помилка реєстрації")
+            }
+    }
+
+    // Функція для ручного оновлення профілю (щоб перевірити, чи юзер вже клікнув на лінк у листі)
+    // Оновлена функція з колбеками результату
+    fun reloadUser(onResult: (Boolean) -> Unit, onError: (String) -> Unit) {
+        auth.currentUser?.reload()
+            ?.addOnSuccessListener {
+                val isVerified = auth.currentUser?.isEmailVerified == true
+                _isEmailVerified.value = isVerified
+                onResult(isVerified) // Повертаємо актуальний статус в UI
+            }
+            ?.addOnFailureListener { e ->
+                onError(e.localizedMessage ?: "Не вдалося оновити статус")
+            }
+    }
+
+    // Якщо лист загубився і треба відправити ще раз
+    fun resendVerificationEmail(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        auth.currentUser?.sendEmailVerification()
+            ?.addOnSuccessListener { onSuccess() }
+            ?.addOnFailureListener { e -> onError(e.localizedMessage ?: "Помилка відправки") }
+    }
+
+    fun resetPassword(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (email.isBlank()) {
+            onError("Будь ласка, введіть ваш email")
+            return
+        }
+
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { exception ->
+                onError(exception.localizedMessage ?: "Помилка відправки листа для скидання пароля")
+            }
     }
 
     fun signInWithEmail(email: String, pass: String, onError: (String) -> Unit) {

@@ -38,6 +38,12 @@ fun SignInScreen(viewModel: HabitsViewModel) {
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    var showResetDialog by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
+    var resetMessage by remember { mutableStateOf<String?>(null) }
+    var isResetError by remember { mutableStateOf(false) }
+    var isResetting by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -108,6 +114,31 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                     unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             )
+
+            if (isLoginMode) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    TextButton(
+                        onClick = {
+                            resetEmail = email // Зручність: підставляємо email, якщо юзер його вже ввів
+                            resetMessage = null
+                            showResetDialog = true
+                        },
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(
+                            text = "Забули пароль?",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Відображення помилки
             if (errorMessage != null) {
@@ -223,6 +254,87 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                 // Можеш замінити на іконку Google, якщо є векторна, або використати текст
                 Text("Продовжити з Google", fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
+        }
+
+        // МОДАЛКА ВІДНОВЛЕННЯ ПАРОЛЯ
+        if (showResetDialog) {
+            AlertDialog(
+                onDismissRequest = { if (!isResetting) showResetDialog = false },
+                title = {
+                    Text("Відновлення пароля \uD83D\uDD12", fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Введіть email, на який зареєстровано ваш акаунт, і ми надішлемо посилання для створення нового пароля.",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = resetEmail,
+                            onValueChange = { resetEmail = it; resetMessage = null },
+                            label = { Text("Email") },
+                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        )
+                        if (resetMessage != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = resetMessage!!,
+                                color = if (isResetError) MaterialTheme.colorScheme.error else Color(0xFF4CAF50),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            isResetting = true
+                            resetMessage = null
+                            viewModel.resetPassword(
+                                email = resetEmail.trim(),
+                                onSuccess = {
+                                    isResetting = false
+                                    isResetError = false
+                                    resetMessage = "✉️ Лист успішно надіслано! Перевірте пошту (і папку Спам)."
+                                },
+                                onError = { error ->
+                                    isResetting = false
+                                    isResetError = true
+                                    resetMessage = error
+                                }
+                            )
+                        },
+                        enabled = resetEmail.isNotBlank() && !isResetting,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        if (isResetting) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                        } else {
+                            Text("Надіслати", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showResetDialog = false },
+                        enabled = !isResetting
+                    ) {
+                        Text("Скасувати", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(20.dp)
+            )
         }
     }
 }
