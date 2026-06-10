@@ -1,6 +1,5 @@
 package com.example.vibehabit.components
 
-// Обов'язково перевір наявність цих імпортів у верхній частині файлу:
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,10 +31,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 import com.example.vibehabit.viewmodels.HabitsViewModel
 
 @Composable
@@ -49,10 +50,10 @@ fun ProfileBlock(viewModel: HabitsViewModel) {
 
     // Маленька гейміфікація: вираховуємо ранг залежно від кількості звичок
     val userRank = when {
-        habits.isEmpty() -> "Новачок"
-        habits.sumOf { it.completedDates.size } > 20 -> "Рейнджер звичок 👑"
-        habits.sumOf { it.completedDates.size } > 5 -> "Вайб-ентузіаст 🔥"
-        else -> "Початківець ✨"
+        habits.isEmpty() -> stringResource(R.string.rank_newbie)
+        habits.sumOf { it.completedDates.size } > 20 -> stringResource(R.string.rank_ranger)
+        habits.sumOf { it.completedDates.size } > 5 -> stringResource(R.string.rank_enthusiast)
+        else -> stringResource(R.string.rank_beginner)
     }
 
     // Перша літера для аватарки
@@ -121,7 +122,7 @@ fun ProfileBlock(viewModel: HabitsViewModel) {
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Ранг: $userRank",
+                    text = stringResource(R.string.rank_label, userRank),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -143,7 +144,7 @@ fun ProfileBlock(viewModel: HabitsViewModel) {
         ) {
             Icon(
                 imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                contentDescription = "Редагувати профіль",
+                contentDescription = stringResource(R.string.edit_profile_desc),
                 tint = MaterialTheme.colorScheme.primary
             )
         }

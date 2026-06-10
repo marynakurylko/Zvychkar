@@ -18,8 +18,9 @@ import com.example.vibehabit.viewmodels.HabitsViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExitToApp // НОВИЙ ІМПОРТ
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.example.vibehabit.components.ProfileBlock
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,6 +31,7 @@ fun SettingsScreen(
     habitsViewModel: HabitsViewModel = viewModel(),
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val currentLanguage by settingsViewModel.language.collectAsState(initial = "en")
     val selectedLanguageIndex = if (currentLanguage == "uk") 1 else 0
 
@@ -38,7 +40,7 @@ fun SettingsScreen(
         stringResource(R.string.language_ukrainian)
     )
 
-    // Стан для показу модалки підтвердження виходу
+    // Стан для показу модалок підтвердження виходу
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var authErrorMessage by remember { mutableStateOf<String?>(null) }
@@ -134,9 +136,9 @@ fun SettingsScreen(
                 shape = RoundedCornerShape(16.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
             ) {
-                Icon(Icons.Default.Edit, contentDescription = "Відгук", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.leave_feedback), tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Залишити відгук", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.leave_feedback), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
 
             Spacer(modifier = Modifier.weight(1f)) // Відштовхуємо кнопку виходу в самий низ
@@ -150,16 +152,16 @@ fun SettingsScreen(
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.9f))
             ) {
-                Icon(Icons.Default.ExitToApp, contentDescription = "Вийти", tint = Color.White)
+                Icon(Icons.Default.ExitToApp, contentDescription = stringResource(R.string.sign_out), tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Вийти з акаунта", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(stringResource(R.string.sign_out), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
             TextButton(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Видалити акаунт назавжди",
+                    text = stringResource(R.string.delete_account),
                     color = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
@@ -184,10 +186,10 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
                 title = {
-                    Text("Вихід з акаунта", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.sign_out_title), fontWeight = FontWeight.Bold)
                 },
                 text = {
-                    Text("Ви впевнені, що хочете вийти? Ваші звички безпечно збережені у хмарі і будуть чекати на ваше повернення.")
+                    Text(stringResource(R.string.sign_out_desc))
                 },
                 confirmButton = {
                     TextButton(
@@ -196,12 +198,12 @@ fun SettingsScreen(
                             habitsViewModel.signOut() // Розлогінюємо через Firebase
                         }
                     ) {
-                        Text("Так, вийти", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.confirm_sign_out), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showLogoutDialog = false }) {
-                        Text("Скасувати", color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.cancel_button), color = MaterialTheme.colorScheme.primary)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -213,10 +215,10 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
                 title = {
-                    Text("💥 Незворотна дія!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.delete_account_warning), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                 },
                 text = {
-                    Text("Ви впевнені, що хочете видалити акаунт? Усі ваші створені звички, налаштування та історія стріків у хмарі будуть знищені назавжди без можливості відновлення.")
+                    Text(stringResource(R.string.delete_account_desc))
                 },
                 confirmButton = {
                     TextButton(
@@ -233,12 +235,12 @@ fun SettingsScreen(
                             )
                         }
                     ) {
-                        Text("Так, видалити назавжди", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.confirm_delete_account), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) {
-                        Text("Скасувати", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.cancel_button), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -250,14 +252,14 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { deletionErrorByFirebase = null },
                 title = {
-                    Text("⚠️ Щось пішло не так", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.error_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                 },
                 text = {
                     Text(deletionErrorByFirebase!!)
                 },
                 confirmButton = {
                     TextButton(onClick = { deletionErrorByFirebase = null }) {
-                        Text("Зрозуміло", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ok_button), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -270,12 +272,12 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { if (!isFeedbackSubmitting) showFeedbackDialog = false },
                 title = {
-                    Text("Зворотний зв'язок 💜", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.feedback_title), fontWeight = FontWeight.Bold)
                 },
                 text = {
                     Column {
                         Text(
-                            text = "Знайшли баг чи маєте ідею? Напишіть нам, і ми зробимо застосунок ще кращим!",
+                            text = stringResource(R.string.feedback_desc),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -283,7 +285,7 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = feedbackText,
                             onValueChange = { feedbackText = it },
-                            placeholder = { Text("Ваше повідомлення...") },
+                            placeholder = { Text(stringResource(R.string.feedback_placeholder)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(120.dp),
@@ -306,7 +308,7 @@ fun SettingsScreen(
                                         isFeedbackSubmitting = false
                                         showFeedbackDialog = false
                                         feedbackText = "" // Очищаємо поле
-                                        feedbackSuccessMessage = "Дякуємо! Ваш відгук успішно надіслано ✨"
+                                        feedbackSuccessMessage = context.getString(R.string.feedback_success_msg)
                                     },
                                     onError = { error ->
                                         isFeedbackSubmitting = false
@@ -322,7 +324,7 @@ fun SettingsScreen(
                         if (isFeedbackSubmitting) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                         } else {
-                            Text("Надіслати", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.send_button), fontWeight = FontWeight.Bold)
                         }
                     }
                 },
@@ -331,7 +333,7 @@ fun SettingsScreen(
                         onClick = { showFeedbackDialog = false },
                         enabled = !isFeedbackSubmitting
                     ) {
-                        Text("Скасувати", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.cancel_button), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -343,12 +345,12 @@ fun SettingsScreen(
         if (feedbackSuccessMessage != null) {
             AlertDialog(
                 onDismissRequest = { feedbackSuccessMessage = null },
-                icon = { Icon(Icons.Default.Check, contentDescription = "Успіх", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) },
-                title = { Text("Успішно", fontWeight = FontWeight.Bold) },
+                icon = { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.success_title), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) },
+                title = { Text(stringResource(R.string.success_title), fontWeight = FontWeight.Bold) },
                 text = { Text(feedbackSuccessMessage!!, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                 confirmButton = {
                     TextButton(onClick = { feedbackSuccessMessage = null }) {
-                        Text("Супер", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.feedback_success_button), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,

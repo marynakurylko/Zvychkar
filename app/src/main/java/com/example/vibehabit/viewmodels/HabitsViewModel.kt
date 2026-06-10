@@ -20,11 +20,10 @@ import com.example.vibehabit.auth.AuthState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.concurrent.ExecutionException
 import kotlinx.coroutines.tasks.await
 import android.util.Log
+import com.example.vibehabit.R
 import kotlinx.coroutines.NonCancellable
 import com.google.firebase.auth.GoogleAuthProvider
 
@@ -40,7 +39,8 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     private val _isOnboardingCompleted = MutableStateFlow<Boolean?>(null)
     val isOnboardingCompleted: StateFlow<Boolean?> = _isOnboardingCompleted.asStateFlow()
 
-    private val _username = MutableStateFlow<String>("Користувач")
+    private val defaultUser = application.getString(R.string.default_username)
+    private val _username = MutableStateFlow<String>(defaultUser)
     val username: StateFlow<String> = _username.asStateFlow()
 
     private val _habits = MutableStateFlow<List<Habit>>(emptyList())
@@ -63,7 +63,7 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             dataStore.data.collect { preferences ->
                 _isOnboardingCompleted.value = preferences[ONBOARDING_KEY] ?: false
-                _username.value = preferences[USERNAME_KEY] ?: "Користувач"
+                _username.value = preferences[USERNAME_KEY] ?: defaultUser
             }
         }
         checkAuthState()
@@ -77,7 +77,7 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
                 _isEmailVerified.value = currentUser.isEmailVerified // ЗЧИТУЄМО СТАТУС
                 listenToHabits(currentUser.uid)
 
-                if (_username.value == "Користувач" && currentUser.email != null) {
+                if (_username.value == defaultUser && currentUser.email != null) {
                     val emailPrefix = currentUser.email!!.substringBefore("@")
                     updateUsername(emailPrefix)
                 }
@@ -199,14 +199,14 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
 
         auth.signInWithCredential(credential)
             .addOnFailureListener { exception ->
-                onError(exception.localizedMessage ?: "Помилка входу через Google")
+                onError(exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_google_sign_in))
             }
     }
 
     fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            onError("Користувач не знайдений у системі.")
+            onError(getApplication<Application>().getString(R.string.error_user_not_found))
             return
         }
         val userId = currentUser.uid
@@ -244,9 +244,9 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
                     errorMessage.contains("CREDENTIAL_TOO_OLD_LOGIN_AGAIN") ||
                     errorMessage.contains("recent login")) {
 
-                    onError("🔒 Для безпеки ця дія вимагає свіжого входу. Будь ласка, вийдіть з акаунта, увійдіть знову та повторіть видалення.")
+                    onError(getApplication<Application>().getString(R.string.error_reauth_required))
                 } else {
-                    onError("Помилка: ${e.localizedMessage}")
+                    onError("${getApplication<Application>().getString(R.string.error_title).substringBefore(" ")}: ${e.localizedMessage}")
                 }
             }
         }
@@ -258,7 +258,7 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
                 auth.currentUser?.sendEmailVerification()
             }
             .addOnFailureListener { exception ->
-                onError(exception.localizedMessage ?: "Помилка реєстрації")
+                onError(exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_registration))
             }
     }
 
@@ -272,7 +272,7 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
                 onResult(isVerified) // Повертаємо актуальний статус в UI
             }
             ?.addOnFailureListener { e ->
-                onError(e.localizedMessage ?: "Не вдалося оновити статус")
+                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_reload_user))
             }
     }
 
@@ -280,25 +280,25 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     fun resendVerificationEmail(onSuccess: () -> Unit, onError: (String) -> Unit) {
         auth.currentUser?.sendEmailVerification()
             ?.addOnSuccessListener { onSuccess() }
-            ?.addOnFailureListener { e -> onError(e.localizedMessage ?: "Помилка відправки") }
+            ?.addOnFailureListener { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_resend_email)) }
     }
 
     fun resetPassword(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (email.isBlank()) {
-            onError("Будь ласка, введіть ваш email")
+            onError(getApplication<Application>().getString(R.string.error_enter_email))
             return
         }
 
         auth.sendPasswordResetEmail(email)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { exception ->
-                onError(exception.localizedMessage ?: "Помилка відправки листа для скидання пароля")
+                onError(exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_reset_password_send))
             }
     }
 
     fun signInWithEmail(email: String, pass: String, onError: (String) -> Unit) {
         auth.signInWithEmailAndPassword(email, pass)
-            .addOnFailureListener { exception -> onError(exception.localizedMessage ?: "Помилка входу") }
+            .addOnFailureListener { exception -> onError(exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_sign_in)) }
     }
 
     fun signOut() {
@@ -324,14 +324,14 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     fun sendFeedback(message: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            onError("Користувач не авторизований")
+            onError(getApplication<Application>().getString(R.string.error_not_authorized))
             return
         }
 
         // Формуємо об'єкт із даними відгуку
         val feedbackData = hashMapOf(
             "userId" to currentUser.uid,
-            "email" to (currentUser.email ?: "Без email"),
+            "email" to (currentUser.email ?: getApplication<Application>().getString(R.string.no_email_provided)),
             "message" to message,
             "timestamp" to com.google.firebase.firestore.FieldValue.serverTimestamp() // Автоматичний точний час сервера
         )
@@ -341,7 +341,7 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             .add(feedbackData)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e ->
-                onError(e.localizedMessage ?: "Не вдалося відправити відгук. Спробуйте пізніше.")
+                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_feedback_send))
             }
     }
 }

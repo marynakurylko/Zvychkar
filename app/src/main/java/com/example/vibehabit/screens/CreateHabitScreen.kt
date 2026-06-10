@@ -251,7 +251,7 @@ fun CreateHabitScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Notifications, contentDescription = "Time", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Filled.Notifications, contentDescription = stringResource(R.string.time_desc), tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(stringResource(R.string.reminders_time_label), fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                         }

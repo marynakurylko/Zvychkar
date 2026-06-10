@@ -12,8 +12,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 import java.time.LocalDate
 
 @Composable
@@ -26,8 +28,13 @@ fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
     val daysToSubtract = (weeksToDisplay - 1) * 7 + (currentDayOfWeek - 1)
     val startDate = today.minusDays(daysToSubtract.toLong())
 
-    // Дні тижня для підписів зліва
-    val weekDaysLabels = listOf("Пн", "Ср", "Пт", "Нд")
+    // Дні тижня для підписів зліва - беремо з ресурсів
+    val weekDaysLabels = listOf(
+        stringResource(R.string.day_mon),
+        stringResource(R.string.day_wed),
+        stringResource(R.string.day_fri),
+        stringResource(R.string.day_sun)
+    )
 
     Row(
         modifier = Modifier
@@ -44,7 +51,7 @@ fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
         ) {
             for (day in 0..6) {
                 Box(modifier = Modifier.height(14.dp), contentAlignment = Alignment.Center) {
-                    if (day % 2 == 0) { // Виводимо підпис через день
+                    if (day % 2 == 0) { // Виводимо підпис через день (Пн, Ср, Пт, Нд)
                         Text(
                             text = weekDaysLabels.getOrNull(day / 2) ?: "",
                             fontSize = 10.sp,
@@ -86,4 +93,3 @@ fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
         }
     }
 }
-

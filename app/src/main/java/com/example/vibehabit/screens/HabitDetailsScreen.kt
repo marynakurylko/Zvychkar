@@ -1,9 +1,7 @@
 package com.example.vibehabit.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -118,20 +116,20 @@ fun HabitDetailsScreen(
                 // Картка "Поточна серія"
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "🔥 ${habit.currentStreak}",
+                        text = stringResource(R.string.streak_format, habit.currentStreak),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFFF9800)
                     )
                     Text(
-                        text = "Поточна серія", // stringResource(R.string.current_streak)
+                        text = stringResource(R.string.current_streak),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 // Вертикальний розділювач
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier.height(40.dp).width(1.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 )
@@ -139,13 +137,13 @@ fun HabitDetailsScreen(
                 // Картка "Рекорд"
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "👑 ${habit.bestStreak}",
+                        text = stringResource(R.string.best_streak_format, habit.bestStreak),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFFFD700) // Золотий колір
                     )
                     Text(
-                        text = "Рекорд", // stringResource(R.string.best_streak)
+                        text = stringResource(R.string.best_streak),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

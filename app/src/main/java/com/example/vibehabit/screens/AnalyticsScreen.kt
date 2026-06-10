@@ -16,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 import com.example.vibehabit.components.HeatmapChart
 import com.example.vibehabit.viewmodels.HabitsViewModel
 
@@ -31,12 +33,11 @@ fun AnalyticsScreen(viewModel: HabitsViewModel) {
     // Рахуємо статистику
     val totalCompletedTasks = habits.sumOf { it.completedDates.size }
     val bestGlobalStreak = habits.maxOfOrNull { it.bestStreak } ?: 0
-    val totalHabits = habits.size
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Аналітика", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Text(stringResource(R.string.analytics_title), fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
@@ -57,15 +58,15 @@ fun AnalyticsScreen(viewModel: HabitsViewModel) {
             ) {
                 StatCard(
                     modifier = Modifier.weight(1f),
-                    title = "Всього виконано",
+                    title = stringResource(R.string.stat_total_completed),
                     value = totalCompletedTasks.toString(),
                     icon = Icons.Filled.CheckCircle,
                     color = Color(0xFF00FF7F) // Неоновий зелений
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
-                    title = "Макс. Стрік",
-                    value = "$bestGlobalStreak 🔥",
+                    title = stringResource(R.string.stat_max_streak),
+                    value = stringResource(R.string.streak_format, bestGlobalStreak),
                     icon = Icons.Filled.LocalFireDepartment,
                     color = Color(0xFFFF9800) // Помаранчевий
                 )
@@ -74,7 +75,7 @@ fun AnalyticsScreen(viewModel: HabitsViewModel) {
             // Наш Heatmap
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Історія активності",
+                    text = stringResource(R.string.activity_history),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface

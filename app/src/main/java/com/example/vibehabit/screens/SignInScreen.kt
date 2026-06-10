@@ -12,10 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 import com.example.vibehabit.viewmodels.HabitsViewModel
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -60,14 +62,14 @@ fun SignInScreen(viewModel: HabitsViewModel) {
         ) {
             // Логотип або Заголовок
             Text(
-                text = "VibeHabit \uD83D\uDE80",
+                text = stringResource(R.string.app_name_logo),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (isLoginMode) "З поверненням!" else "Створити новий акаунт",
+                text = if (isLoginMode) stringResource(R.string.welcome_back) else stringResource(R.string.create_account),
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -78,8 +80,8 @@ fun SignInScreen(viewModel: HabitsViewModel) {
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it; errorMessage = null },
-                label = { Text("Email") },
-                leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email") },
+                label = { Text(stringResource(R.string.email_label)) },
+                leadingIcon = { Icon(Icons.Default.Email, contentDescription = stringResource(R.string.email_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -99,8 +101,8 @@ fun SignInScreen(viewModel: HabitsViewModel) {
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it; errorMessage = null },
-                label = { Text("Пароль") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Пароль") },
+                label = { Text(stringResource(R.string.password_label)) },
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.password_label)) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -129,7 +131,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
-                            text = "Забули пароль?",
+                            text = stringResource(R.string.forgot_password),
                             color = MaterialTheme.colorScheme.primary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
@@ -148,6 +150,8 @@ fun SignInScreen(viewModel: HabitsViewModel) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            val fillAllFieldsError = stringResource(R.string.fill_all_fields_error)
+
             // Головна кнопка (Вхід / Реєстрація)
             Button(
                 onClick = {
@@ -158,7 +162,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                             viewModel.signUpWithEmail(email, password) { error -> errorMessage = error }
                         }
                     } else {
-                        errorMessage = "Заповніть усі поля"
+                        errorMessage = fillAllFieldsError
                     }
                 },
                 modifier = Modifier
@@ -168,7 +172,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(
-                    text = if (isLoginMode) "Увійти" else "Зареєструватися",
+                    text = if (isLoginMode) stringResource(R.string.sign_in_button) else stringResource(R.string.sign_up_button),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -179,7 +183,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
             // Перемикач режимів
             TextButton(onClick = { isLoginMode = !isLoginMode; errorMessage = null }) {
                 Text(
-                    text = if (isLoginMode) "Немає акаунту? Створити" else "Вже є акаунт? Увійти",
+                    text = if (isLoginMode) stringResource(R.string.no_account_link) else stringResource(R.string.have_account_link),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -191,17 +195,19 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Divider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surfaceVariant)
+                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surfaceVariant)
                 Text(
-                    text = "АБО",
+                    text = stringResource(R.string.or_separator),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
-                Divider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surfaceVariant)
+                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surfaceVariant)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            val googleAuthError = stringResource(R.string.google_auth_error)
 
             // Кнопка входу через Google
             OutlinedButton(
@@ -235,10 +241,10 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                         } catch (e: GetCredentialException) {
                             // Якщо користувач просто закрив шторку, ми не показуємо страшну помилку
                             if (!e.message.toString().contains("cancelled")) {
-                                errorMessage = "Помилка авторизації Google"
+                                errorMessage = googleAuthError
                             }
                         } catch (e: Exception) {
-                            errorMessage = "Щось пішло не так: ${e.localizedMessage}"
+                            errorMessage = context.getString(R.string.something_went_wrong, e.localizedMessage ?: "")
                         }
                     }
                 },
@@ -252,7 +258,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 // Можеш замінити на іконку Google, якщо є векторна, або використати текст
-                Text("Продовжити з Google", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.continue_with_google), fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
         }
 
@@ -261,12 +267,12 @@ fun SignInScreen(viewModel: HabitsViewModel) {
             AlertDialog(
                 onDismissRequest = { if (!isResetting) showResetDialog = false },
                 title = {
-                    Text("Відновлення пароля \uD83D\uDD12", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.reset_password_title), fontWeight = FontWeight.Bold)
                 },
                 text = {
                     Column {
                         Text(
-                            text = "Введіть email, на який зареєстровано ваш акаунт, і ми надішлемо посилання для створення нового пароля.",
+                            text = stringResource(R.string.reset_password_desc),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -274,8 +280,8 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                         OutlinedTextField(
                             value = resetEmail,
                             onValueChange = { resetEmail = it; resetMessage = null },
-                            label = { Text("Email") },
-                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email") },
+                            label = { Text(stringResource(R.string.email_label)) },
+                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = stringResource(R.string.email_label)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true,
@@ -296,6 +302,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                     }
                 },
                 confirmButton = {
+                    val successResetMsg = stringResource(R.string.reset_email_sent)
                     Button(
                         onClick = {
                             isResetting = true
@@ -305,7 +312,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                                 onSuccess = {
                                     isResetting = false
                                     isResetError = false
-                                    resetMessage = "✉️ Лист успішно надіслано! Перевірте пошту (і папку Спам)."
+                                    resetMessage = successResetMsg
                                 },
                                 onError = { error ->
                                     isResetting = false
@@ -320,7 +327,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                         if (isResetting) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                         } else {
-                            Text("Надіслати", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.send_button), fontWeight = FontWeight.Bold)
                         }
                     }
                 },
@@ -329,7 +336,7 @@ fun SignInScreen(viewModel: HabitsViewModel) {
                         onClick = { showResetDialog = false },
                         enabled = !isResetting
                     ) {
-                        Text("Скасувати", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.cancel_button), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -338,4 +345,3 @@ fun SignInScreen(viewModel: HabitsViewModel) {
         }
     }
 }
-

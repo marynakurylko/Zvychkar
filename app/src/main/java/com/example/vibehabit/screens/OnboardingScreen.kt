@@ -24,10 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
 import kotlinx.coroutines.launch
 
 // Дані для кожної сторінки
@@ -42,20 +44,20 @@ data class OnboardingPage(
 fun OnboardingScreen(onFinish: () -> Unit) {
     val pages = listOf(
         OnboardingPage(
-            title = "Створюй свій вайб",
-            description = "Формуй корисні звички за допомогою сучасного та стильного трекера.",
+            title = stringResource(R.string.onboarding_title_1),
+            description = stringResource(R.string.onboarding_desc_1),
             icon = Icons.Filled.Bolt,
             color = Color(0xFF00E5FF) // Cyan
         ),
         OnboardingPage(
-            title = "Тримай стрік",
-            description = "Не переривай ланцюжок! Виконуй звички щодня та встановлюй нові рекорди.",
+            title = stringResource(R.string.onboarding_title_2),
+            description = stringResource(R.string.onboarding_desc_2),
             icon = Icons.Filled.LocalFireDepartment,
             color = Color(0xFFFF9800) // Orange
         ),
         OnboardingPage(
-            title = "Завжди в тонусі",
-            description = "Увімкни сповіщення, щоб ми вчасно нагадували тобі про важливе.",
+            title = stringResource(R.string.onboarding_title_3),
+            description = stringResource(R.string.onboarding_desc_3),
             icon = Icons.Filled.NotificationsActive,
             color = Color(0xFF9D4EDD) // Purple
         )
@@ -88,7 +90,10 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onFinish) {
-                    Text("Skip", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = stringResource(R.string.onboarding_skip),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
@@ -191,7 +196,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(
-                    text = if (isLastPage) "Почати роботу" else "Далі",
+                    text = if (isLastPage) stringResource(R.string.onboarding_start) else stringResource(R.string.onboarding_next),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )

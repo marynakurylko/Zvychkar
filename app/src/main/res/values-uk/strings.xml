@@ -63,4 +63,109 @@
     <string name="reminders_enable_label">Увімкнути нагадування</string>
     <string name="reminders_enable_desc">Отримувати пуш-сповіщення</string>
     <string name="reminders_time_label">Час</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Створюй свій вайб</string>
+    <string name="onboarding_desc_1">Формуй корисні звички за допомогою сучасного та стильного трекера.</string>
+    <string name="onboarding_title_2">Тримай стрік</string>
+    <string name="onboarding_desc_2">Не переривай ланцюжок! Виконуй звички щодня та встановлюй нові рекорди.</string>
+    <string name="onboarding_title_3">Завжди в тонусі</string>
+    <string name="onboarding_desc_3">Увімкни сповіщення, щоб ми вчасно нагадували тобі про важливе.</string>
+    <string name="onboarding_skip">Пропустити</string>
+    <string name="onboarding_start">Почати роботу</string>
+    <string name="onboarding_next">Далі</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_greeting">Привіт, %1$s! 👋</string>
+    <string name="verify_email_title">Підтвердіть ваш Email</string>
+    <string name="verify_email_desc">Ми надіслали лист із посиланням. Перейдіть за ним, щоб захистити свій акаунт.</string>
+    <string name="sending_label">Відправка...</string>
+    <string name="email_sent_success">✉️ Новий лист успішно надіслано!</string>
+    <string name="resend_cooldown">Зачекайте %1$d с</string>
+    <string name="resend_email">Надіслати ще раз</string>
+    <string name="checking_label">Перевіряємо...</string>
+    <string name="email_not_verified">Пошта ще не підтверджена. Перевірте папку Спам.</string>
+    <string name="i_confirmed">Я підтвердив(ла)</string>
+    <string name="empty_habits_title">Твій шлях починається тут!</string>
+    <string name="empty_habits_desc">Додай свою першу звичку та почни формувати новий вайб.</string>
+    <string name="delete_habit_dialog_title">Видалити звичку?</string>
+    <string name="delete_habit_dialog_desc">Ви впевнені, що хочете назавжди видалити цю звичку та всю її історію? Цю дію неможливо скасувати.</string>
+
+    <!-- Settings & Profile -->
+    <string name="leave_feedback">Залишити відгук</string>
+    <string name="feedback_desc_short">Відгук</string>
+    <string name="sign_out">Вийти з акаунта</string>
+    <string name="delete_account">Видалити акаунт назавжди</string>
+    <string name="sign_out_title">Вихід з акаунта</string>
+    <string name="sign_out_desc">Ви впевнені, що хочете вийти? Ваші звички безпечно збережені у хмарі і будуть чекати на ваше повернення.</string>
+    <string name="confirm_sign_out">Так, вийти</string>
+    <string name="delete_account_warning">💥 Незворотна дія!</string>
+    <string name="delete_account_desc">Ви впевнені, що хочете видалити акаунт? Усі ваші створені звички, налаштування та історія стріків у хмарі будуть знищені назавжди без можливості відновлення.</string>
+    <string name="confirm_delete_account">Так, видалити назавжди</string>
+    <string name="error_title">⚠️ Щось пішло не так</string>
+    <string name="ok_button">Зрозуміло</string>
+    <string name="feedback_title">Зворотний зв\'язок 💜</string>
+    <string name="feedback_desc">Знайшли баг чи маєте ідею? Напишіть нам, і ми зробимо застосунок ще кращим!</string>
+    <string name="feedback_placeholder">Ваше повідомлення...</string>
+    <string name="send_button">Надіслати</string>
+    <string name="feedback_success_msg">Дякуємо! Ваш відгук успішно надіслано ✨</string>
+    <string name="success_title">Успішно</string>
+    <string name="feedback_success_button">Супер</string>
+    <string name="cancel_button">Скасувати</string>
+
+    <!-- Auth -->
+    <string name="app_name_logo">VibeHabit 🚀</string>
+    <string name="welcome_back">З поверненням!</string>
+    <string name="create_account">Створити новий акаунт</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Пароль</string>
+    <string name="forgot_password">Забули пароль?</string>
+    <string name="fill_all_fields_error">Заповніть усі поля</string>
+    <string name="sign_in_button">Увійти</string>
+    <string name="sign_up_button">Зареєструватися</string>
+    <string name="no_account_link">Немає акаунту? Створити</string>
+    <string name="have_account_link">Вже є акаунт? Увійти</string>
+    <string name="or_separator">АБО</string>
+    <string name="continue_with_google">Продовжити з Google</string>
+    <string name="google_auth_error">Помилка авторизації Google</string>
+    <string name="something_went_wrong">Щось пішло не так: %1$s</string>
+    <string name="reset_password_title">Відновлення пароля 🔐</string>
+    <string name="reset_password_desc">Введіть email, на який зареєстровано ваш акаунт, і ми надішлемо посилання для створення нового пароля.</string>
+    <string name="reset_email_sent">✉️ Лист успішно надіслано! Перевірте пошту (і папку Спам).</string>
+
+    <!-- Analytics -->
+    <string name="analytics_title">Аналітика</string>
+    <string name="stat_total_completed">Всього виконано</string>
+    <string name="stat_max_streak">Макс. Стрік</string>
+    <string name="streak_format">%1$d 🔥</string>
+    <string name="best_streak_format">👑 %1$d</string>
+    <string name="activity_history">Історія активності</string>
+
+    <!-- Profile Ranks -->
+    <string name="rank_label">Ранг: %1$s</string>
+    <string name="rank_newbie">Новачок</string>
+    <string name="rank_ranger">Рейнджер звичок 👑</string>
+    <string name="rank_enthusiast">Вайб-ентузіаст 🔥</string>
+    <string name="rank_beginner">Початківець ✨</string>
+    <string name="edit_profile_desc">Редагувати профіль</string>
+    <string name="time_desc">Час</string>
+
+    <!-- Calendar & Details -->
+    <string name="calendar_empty_state">Поки порожньо, але це легко виправити, додавши нову звичку! ✨</string>
+    <string name="current_streak">Поточна серія</string>
+    <string name="best_streak">Рекорд</string>
+
+    <!-- ViewModel Strings -->
+    <string name="default_username">Користувач</string>
+    <string name="error_google_sign_in">Помилка входу через Google</string>
+    <string name="error_user_not_found">Користувач не знайдений у системі.</string>
+    <string name="error_reauth_required">🔒 Для безпеки ця дія вимагає свіжого входу. Будь ласка, вийдіть з акаунта, увійдіть знову та повторіть видалення.</string>
+    <string name="error_registration">Помилка реєстрації</string>
+    <string name="error_reload_user">Не вдалося оновити статус</string>
+    <string name="error_resend_email">Помилка відправки</string>
+    <string name="error_enter_email">Будь ласка, введіть ваш email</string>
+    <string name="error_reset_password_send">Помилка відправки листа для скидання пароля</string>
+    <string name="error_sign_in">Помилка входу</string>
+    <string name="error_not_authorized">Користувач не авторизований</string>
+    <string name="error_feedback_send">Не вдалося відправити відгук. Спробуйте пізніше.</string>
 </resources>

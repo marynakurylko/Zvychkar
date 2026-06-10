@@ -119,7 +119,7 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                     contentAlignment = Alignment.TopCenter
                 ) {
                     Text(
-                        text = "Поки порожньо, але це легко виправити, додавши нову звичку! ✨",
+                        text = stringResource(R.string.calendar_empty_state),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 16.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -127,7 +127,6 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                     )
                 }
             } else {
-                // ТВІЙ ІСНУЮЧИЙ СПИСОК ЗВИЧОК
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)

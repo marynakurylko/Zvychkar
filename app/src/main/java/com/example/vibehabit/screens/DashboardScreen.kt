@@ -90,12 +90,17 @@ fun DashboardScreen(
     val totalHabitsToday = sortedHabits.size
     val completedHabitsToday = sortedHabits.count { it.completedDates.contains(todayStr) }
 
+    val sendingMsg = stringResource(R.string.sending_label)
+    val successMsg = stringResource(R.string.email_sent_success)
+    val checkingMsg = stringResource(R.string.checking_label)
+    val notVerifiedMsg = stringResource(R.string.email_not_verified)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Привіт, $username! 👋",
+                        text = stringResource(R.string.dashboard_greeting, username ?: ""),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 22.sp
@@ -151,12 +156,12 @@ fun DashboardScreen(
                                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                                     Icon(
                                         imageVector = Icons.Default.Email,
-                                        contentDescription = "Email",
+                                        contentDescription = stringResource(R.string.email_label),
                                         tint = Color(0xFF9D4EDD)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Підтвердіть ваш Email",
+                                        text = stringResource(R.string.verify_email_title),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 16.sp,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -164,7 +169,7 @@ fun DashboardScreen(
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Ми надіслали лист із посиланням. Перейдіть за ним, щоб захистити свій акаунт.",
+                                    text = stringResource(R.string.verify_email_desc),
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -190,13 +195,13 @@ fun DashboardScreen(
                                     TextButton(
                                         onClick = {
                                             resendCooldown = 30 // Запускаємо кулдаун на 30 сек
-                                            bannerMessage = "Відправка..."
+                                            bannerMessage = sendingMsg
                                             isBannerError = false
 
                                             viewModel.resendVerificationEmail(
                                                 onSuccess = {
                                                     isBannerError = false
-                                                    bannerMessage = "✉️ Новий лист успішно надіслано!"
+                                                    bannerMessage = successMsg
                                                 },
                                                 onError = { error ->
                                                     isBannerError = true
@@ -208,7 +213,7 @@ fun DashboardScreen(
                                         enabled = resendCooldown == 0 // Блокуємо кнопку, якщо таймер іде
                                     ) {
                                         Text(
-                                            text = if (resendCooldown > 0) "Зачекайте $resendCooldown с" else "Надіслати ще раз",
+                                            text = if (resendCooldown > 0) stringResource(R.string.resend_cooldown, resendCooldown) else stringResource(R.string.resend_email),
                                             color = if (resendCooldown > 0) Color.Gray else Color(0xFF9D4EDD)
                                         )
                                     }
@@ -218,14 +223,14 @@ fun DashboardScreen(
                                     // КНОПКА "Я ПІДТВЕРДИВ(ЛА)"
                                     Button(
                                         onClick = {
-                                            bannerMessage = "Перевіряємо..."
+                                            bannerMessage = checkingMsg
                                             isBannerError = false
 
                                             viewModel.reloadUser(
                                                 onResult = { verified ->
                                                     if (!verified) {
                                                         isBannerError = true
-                                                        bannerMessage = "Пошта ще не підтверджена. Перевірте папку Спам."
+                                                        bannerMessage = notVerifiedMsg
                                                     }
                                                 },
                                                 onError = { error ->
@@ -236,7 +241,7 @@ fun DashboardScreen(
                                         },
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9D4EDD))
                                     ) {
-                                        Text("Я підтвердив(ла)")
+                                        Text(stringResource(R.string.i_confirmed))
                                     }
                                 }
                             }
@@ -260,14 +265,14 @@ fun DashboardScreen(
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
                             Text(
-                                text = "Твій шлях починається тут!",
+                                text = stringResource(R.string.empty_habits_title),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Додай свою першу звичку та почни формувати новий вайб.",
+                                text = stringResource(R.string.empty_habits_desc),
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -318,13 +323,13 @@ fun DashboardScreen(
                     onDismissRequest = { habitToDelete = null },
                     title = {
                         Text(
-                            text = "Видалити звичку?",
+                            text = stringResource(R.string.delete_habit_dialog_title),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.error
                         )
                     },
                     text = {
-                        Text("Ви впевнені, що хочете назавжди видалити цю звичку та всю її історію? Цю дію неможливо скасувати.")
+                        Text(stringResource(R.string.delete_habit_dialog_desc))
                     },
                     confirmButton = {
                         TextButton(
@@ -335,12 +340,12 @@ fun DashboardScreen(
                                 habitToDelete = null
                             }
                         ) {
-                            Text("Видалити", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.delete_desc), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { habitToDelete = null }) {
-                            Text("Скасувати", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.cancel_button), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     },
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,

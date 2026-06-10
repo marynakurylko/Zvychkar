@@ -21,12 +21,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.Habit
 import com.example.vibehabit.R
-import com.example.vibehabit.ui.theme.HabitTrackerTheme
 import java.time.LocalDate
 
 fun getIconByName(name: String): ImageVector {
@@ -154,8 +152,15 @@ fun HabitCard(
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Локалізуємо частоту, якщо вона приходить як константа
+                            val displayFrequency = when (habit.frequency) {
+                                "Daily" -> stringResource(R.string.freq_daily)
+                                "Weekly" -> stringResource(R.string.freq_weekly)
+                                else -> habit.frequency // Для Custom вже приходить сформований рядок
+                            }
+                            
                             Text(
-                                text = habit.frequency, // Або stringResource(R.string.frequency)
+                                text = displayFrequency,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -164,7 +169,7 @@ fun HabitCard(
                             if (habit.currentStreak > 0) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "🔥 ${habit.currentStreak}",
+                                    text = stringResource(R.string.streak_format, habit.currentStreak),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFFF9800) // Яскраво-помаранчевий
