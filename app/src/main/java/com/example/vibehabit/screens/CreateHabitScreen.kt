@@ -211,8 +211,6 @@ fun CreateHabitScreen(
                 NumberStepper(value = targetDays, onValueChange = { targetDays = it })
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -261,8 +259,6 @@ fun CreateHabitScreen(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
