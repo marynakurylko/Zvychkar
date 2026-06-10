@@ -71,7 +71,7 @@ fun HabitCard(
         confirmValueChange = { dismissValue ->
             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
                 onDeleteClick()
-                true
+                false
             } else false
         }
     )

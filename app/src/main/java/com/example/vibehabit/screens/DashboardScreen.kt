@@ -45,6 +45,8 @@ fun DashboardScreen(
     val username by viewModel.username.collectAsState()
     var showConfetti by remember { mutableStateOf(false) }
 
+    var habitToDelete by remember { mutableStateOf<Int?>(null) }
+
     val today = LocalDate.now()
     val todayStr = today.toString()
 
@@ -166,7 +168,7 @@ fun DashboardScreen(
                                 viewModel.toggleHabitCompletion(habit.id, todayStr)
                             },
                             onFavoriteClick = { viewModel.toggleHabitFavorite(habit.id) },
-                            onDeleteClick = { viewModel.deleteHabit(habit.id) },
+                            onDeleteClick = { habitToDelete = habit.id },
                             onCardClick = { onHabitClick(habit.id) },
                             modifier = Modifier.animateItem()
                         )
@@ -183,6 +185,41 @@ fun DashboardScreen(
                             if (activeSystems == 0) showConfetti = false
                         }
                     }
+                )
+            }
+
+            if (habitToDelete != null) {
+                AlertDialog(
+                    onDismissRequest = { habitToDelete = null },
+                    title = {
+                        Text(
+                            text = "Видалити звичку?",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    text = {
+                        Text("Ви впевнені, що хочете назавжди видалити цю звичку та всю її історію? Цю дію неможливо скасувати.")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                // 1. Викликаємо метод ViewModel для реального видалення
+                                viewModel.deleteHabit(habitToDelete!!)
+                                // 2. Закриваємо модалку
+                                habitToDelete = null
+                            }
+                        ) {
+                            Text("Видалити", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { habitToDelete = null }) {
+                            Text("Скасувати", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
                 )
             }
         }
