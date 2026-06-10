@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException
 import kotlinx.coroutines.tasks.await
 import android.util.Log
 import kotlinx.coroutines.NonCancellable
+import com.google.firebase.auth.GoogleAuthProvider
 
 val Context.dataStore by preferencesDataStore(name = "habits_prefs")
 
@@ -188,6 +189,15 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             .delete()
 
         com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(getApplication<Application>(), habitId)
+    }
+
+    fun signInWithGoogle(idToken: String, onError: (String) -> Unit) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+
+        auth.signInWithCredential(credential)
+            .addOnFailureListener { exception ->
+                onError(exception.localizedMessage ?: "Помилка входу через Google")
+            }
     }
 
     fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
