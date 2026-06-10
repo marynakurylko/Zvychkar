@@ -16,6 +16,8 @@ import com.example.vibehabit.components.SegmentedControl
 import com.example.vibehabit.viewmodels.SettingsViewModel
 import com.example.vibehabit.viewmodels.HabitsViewModel
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp // НОВИЙ ІМПОРТ
 import androidx.compose.ui.graphics.Color
 import com.example.vibehabit.components.ProfileBlock
@@ -41,6 +43,11 @@ fun SettingsScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var authErrorMessage by remember { mutableStateOf<String?>(null) }
     var deletionErrorByFirebase by remember { mutableStateOf<String?>(null) }
+
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var feedbackText by remember { mutableStateOf("") }
+    var isFeedbackSubmitting by remember { mutableStateOf(false) }
+    var feedbackSuccessMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -115,6 +122,21 @@ fun SettingsScreen(
                         settingsViewModel.setLanguage(languageTag)
                     }
                 )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OutlinedButton(
+                onClick = { showFeedbackDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            ) {
+                Icon(Icons.Default.Edit, contentDescription = "Відгук", tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Залишити відгук", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
 
             Spacer(modifier = Modifier.weight(1f)) // Відштовхуємо кнопку виходу в самий низ
@@ -236,6 +258,97 @@ fun SettingsScreen(
                 confirmButton = {
                     TextButton(onClick = { deletionErrorByFirebase = null }) {
                         Text("Зрозуміло", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+
+        // МОДАЛКА ЗВОРОТНОГО ЗВ'ЯЗКУ
+        if (showFeedbackDialog) {
+            AlertDialog(
+                onDismissRequest = { if (!isFeedbackSubmitting) showFeedbackDialog = false },
+                title = {
+                    Text("Зворотний зв'язок 💜", fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Знайшли баг чи маєте ідею? Напишіть нам, і ми зробимо застосунок ще кращим!",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = feedbackText,
+                            onValueChange = { feedbackText = it },
+                            placeholder = { Text("Ваше повідомлення...") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (feedbackText.isNotBlank()) {
+                                isFeedbackSubmitting = true
+                                habitsViewModel.sendFeedback(
+                                    message = feedbackText,
+                                    onSuccess = {
+                                        isFeedbackSubmitting = false
+                                        showFeedbackDialog = false
+                                        feedbackText = "" // Очищаємо поле
+                                        feedbackSuccessMessage = "Дякуємо! Ваш відгук успішно надіслано ✨"
+                                    },
+                                    onError = { error ->
+                                        isFeedbackSubmitting = false
+                                        // Можна перевикористати існуючий стейт помилки
+                                        deletionErrorByFirebase = error
+                                    }
+                                )
+                            }
+                        },
+                        enabled = feedbackText.isNotBlank() && !isFeedbackSubmitting,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        if (isFeedbackSubmitting) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                        } else {
+                            Text("Надіслати", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showFeedbackDialog = false },
+                        enabled = !isFeedbackSubmitting
+                    ) {
+                        Text("Скасувати", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+
+        // ПОВІДОМЛЕННЯ ПРО УСПІШНУ ВІДПРАВКУ
+        if (feedbackSuccessMessage != null) {
+            AlertDialog(
+                onDismissRequest = { feedbackSuccessMessage = null },
+                icon = { Icon(Icons.Default.Check, contentDescription = "Успіх", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) },
+                title = { Text("Успішно", fontWeight = FontWeight.Bold) },
+                text = { Text(feedbackSuccessMessage!!, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                confirmButton = {
+                    TextButton(onClick = { feedbackSuccessMessage = null }) {
+                        Text("Супер", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,

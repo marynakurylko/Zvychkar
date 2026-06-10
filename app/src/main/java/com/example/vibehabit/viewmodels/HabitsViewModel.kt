@@ -277,4 +277,28 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(context, habitId)
         }
     }
+
+    fun sendFeedback(message: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            onError("Користувач не авторизований")
+            return
+        }
+
+        // Формуємо об'єкт із даними відгуку
+        val feedbackData = hashMapOf(
+            "userId" to currentUser.uid,
+            "email" to (currentUser.email ?: "Без email"),
+            "message" to message,
+            "timestamp" to com.google.firebase.firestore.FieldValue.serverTimestamp() // Автоматичний точний час сервера
+        )
+
+        // Зберігаємо в нову колекцію "feedback"
+        firestore.collection("feedback")
+            .add(feedbackData)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e ->
+                onError(e.localizedMessage ?: "Не вдалося відправити відгук. Спробуйте пізніше.")
+            }
+    }
 }
