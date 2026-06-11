@@ -95,6 +95,31 @@ fun DashboardScreen(
     val checkingMsg = stringResource(R.string.checking_label)
     val notVerifiedMsg = stringResource(R.string.email_not_verified)
 
+    val onFavoriteToggle: (Int) -> Unit = remember(viewModel) {
+        { habitId -> viewModel.toggleHabitFavorite(habitId) }
+    }
+
+    val onDeleteHabit: (Int) -> Unit = remember {
+        { habitId -> habitToDelete = habitId }
+    }
+
+    val onCardClicked: (Int) -> Unit = remember(onHabitClick) {
+        { habitId -> onHabitClick(habitId) }
+    }
+
+    val onHabitToggle: (com.example.vibehabit.Habit, Boolean) -> Unit = remember(viewModel, completedHabitsToday, totalHabitsToday, todayStr) {
+        { habit, isCompletedToday ->
+            if (!isCompletedToday) {
+                val isLastForToday = (completedHabitsToday + 1) == totalHabitsToday
+                val isTargetReached = (habit.completedDates.size + 1) == habit.targetDays
+                if (isLastForToday || isTargetReached) {
+                    showConfetti = true
+                }
+            }
+            viewModel.toggleHabitCompletion(habit.id, todayStr)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -287,19 +312,10 @@ fun DashboardScreen(
 
                         HabitCard(
                             habit = habit,
-                            onCheckedChange = {
-                                if (!isCompletedToday) {
-                                    val isLastForToday = (completedHabitsToday + 1) == totalHabitsToday
-                                    val isTargetReached = (habit.completedDates.size + 1) == habit.targetDays
-                                    if (isLastForToday || isTargetReached) {
-                                        showConfetti = true
-                                    }
-                                }
-                                viewModel.toggleHabitCompletion(habit.id, todayStr)
-                            },
-                            onFavoriteClick = { viewModel.toggleHabitFavorite(habit.id) },
-                            onDeleteClick = { habitToDelete = habit.id },
-                            onCardClick = { onHabitClick(habit.id) },
+                            onCheckedChange = { onHabitToggle(habit, isCompletedToday) },
+                            onFavoriteClick = { onFavoriteToggle(habit.id) },
+                            onDeleteClick = { onDeleteHabit(habit.id) },
+                            onCardClick = { onCardClicked(habit.id) },
                             modifier = Modifier.animateItem()
                         )
                     }

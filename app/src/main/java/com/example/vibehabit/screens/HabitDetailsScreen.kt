@@ -150,12 +150,14 @@ fun HabitDetailsScreen(
                 }
             }
 
+            val onDayClick: (String) -> Unit = remember(viewModel, habit.id) {
+                { clickedDateStr -> viewModel.toggleHabitCompletion(habitId = habit.id, dateStr = clickedDateStr) }
+            }
+
             HabitCalendar(
                 completedDates = habit.completedDates.toSet(),
                 habitColor = headerColor,
-                onDayClick = { clickedDateStr ->
-                    viewModel.toggleHabitCompletion(habitId = habit.id, dateStr = clickedDateStr)
-                }
+                onDayClick = onDayClick
             )
 
             Spacer(modifier = Modifier.height(32.dp))

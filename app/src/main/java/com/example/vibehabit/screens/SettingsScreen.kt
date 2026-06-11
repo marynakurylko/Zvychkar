@@ -51,6 +51,13 @@ fun SettingsScreen(
     var isFeedbackSubmitting by remember { mutableStateOf(false) }
     var feedbackSuccessMessage by remember { mutableStateOf<String?>(null) }
 
+    val onLanguageSelected: (Int) -> Unit = remember(settingsViewModel) {
+        { index ->
+            val languageTag = if (index == 1) "uk" else "en"
+            settingsViewModel.setLanguage(languageTag)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -119,10 +126,7 @@ fun SettingsScreen(
                 SegmentedControl(
                     items = languages,
                     selectedIndex = selectedLanguageIndex,
-                    onItemSelection = { index ->
-                        val languageTag = if (index == 1) "uk" else "en"
-                        settingsViewModel.setLanguage(languageTag)
-                    }
+                    onItemSelection = onLanguageSelected
                 )
             }
 

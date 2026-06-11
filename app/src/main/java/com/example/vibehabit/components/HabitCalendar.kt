@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -100,6 +101,7 @@ fun HabitCalendar(
                             val isCompleted = completedDates.contains(dateStr)
                             val isToday = date == LocalDate.now()
                             val isPastOrToday = !date.isAfter(LocalDate.now())
+                            val onDayClicked = remember(dateStr, onDayClick) { { onDayClick(dateStr) } }
 
                             Box(
                                 modifier = Modifier
@@ -109,7 +111,7 @@ fun HabitCalendar(
                                     .clip(CircleShape)
                                     .let {
                                         if (isPastOrToday) {
-                                            it.clickable { onDayClick(dateStr) }
+                                            it.clickable(onClick = onDayClicked)
                                         } else it
                                     }
                                     .background(

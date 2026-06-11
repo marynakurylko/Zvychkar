@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,12 +38,13 @@ fun SegmentedControl(
     ) {
         items.forEachIndexed { index, item ->
             val isSelected = selectedIndex == index
+            val onClick = remember(index, onItemSelection) { { onItemSelection(index) } }
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
                     .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                    .clickable { onItemSelection(index) }
+                    .clickable(onClick = onClick)
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -69,6 +71,7 @@ fun IconSelector(
     ) {
         icons.forEachIndexed { index, icon ->
             val isSelected = selectedIndex == index
+            val onClick = remember(index, onIconSelected) { { onIconSelected(index) } }
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -79,7 +82,7 @@ fun IconSelector(
                         color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                         shape = RoundedCornerShape(16.dp)
                     )
-                    .clickable { onIconSelected(index) },
+                    .clickable(onClick = onClick),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -106,6 +109,7 @@ fun ColorSelector(
         colors.forEach { hex ->
             val color = Color(android.graphics.Color.parseColor(hex))
             val isSelected = selectedColorHex == hex
+            val onClick = remember(hex, onColorSelected) { { onColorSelected(hex) } }
 
             Box(
                 modifier = Modifier
@@ -117,7 +121,7 @@ fun ColorSelector(
                         color = if (isSelected) Color.White else Color.Transparent,
                         shape = CircleShape
                     )
-                    .clickable { onColorSelected(hex) }
+                    .clickable(onClick = onClick)
             )
         }
     }

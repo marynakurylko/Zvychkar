@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -39,19 +40,19 @@ fun ColorPicker(
         items(colors) { hexString ->
             val color = Color(android.graphics.Color.parseColor(hexString))
             val isSelected = hexString == selectedColorHex
+            val onClick = remember(hexString, onColorSelected) { { onColorSelected(hexString) } } // ДОДАНО
 
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
                     .background(color)
-                    // Якщо колір обрано, малюємо навколо нього контрастну рамку
                     .border(
                         width = if (isSelected) 3.dp else 0.dp,
                         color = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Transparent,
                         shape = CircleShape
                     )
-                    .clickable { onColorSelected(hexString) }
+                    .clickable(onClick = onClick)
             )
         }
     }

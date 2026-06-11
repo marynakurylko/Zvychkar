@@ -111,6 +111,10 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            val onToggleCompletion: (Int, String) -> Unit = remember(viewModel) {
+                { habitId, dateStr -> viewModel.toggleHabitCompletion(habitId, dateStr) }
+            }
+
             if (habits.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -144,9 +148,7 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                                 .padding(vertical = 6.dp)
                                 .let {
                                     if (isPastOrToday) {
-                                        it.clickable {
-                                            viewModel.toggleHabitCompletion(habit.id, selectedDate.toString())
-                                        }
+                                        it.clickable { onToggleCompletion(habit.id, selectedDate.toString()) }
                                     } else it
                                 }
                                 .background(
