@@ -29,7 +29,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-
+import kotlinx.coroutines.flow.catch
+import com.example.vibehabit.core.UiState
 
 @HiltViewModel
 class HabitsViewModel @Inject constructor(
@@ -46,8 +47,11 @@ class HabitsViewModel @Inject constructor(
     private val _username = MutableStateFlow<String>(defaultUser)
     val username: StateFlow<String> = _username.asStateFlow()
 
-    private val _habits = MutableStateFlow<List<Habit>>(emptyList())
-    val habits: StateFlow<List<Habit>> = _habits.asStateFlow()
+    private val _habitsState = MutableStateFlow<UiState<List<Habit>>>(UiState.Loading)
+    val habitsState: StateFlow<UiState<List<Habit>>> = _habitsState.asStateFlow()
+
+    private val currentHabits: List<Habit>
+        get() = (_habitsState.value as? UiState.Success)?.data ?: emptyList()
 
     private val _heatmapStats = MutableStateFlow<Map<LocalDate, Int>>(emptyMap())
     val heatmapStats: StateFlow<Map<LocalDate, Int>> = _heatmapStats.asStateFlow()
@@ -93,7 +97,7 @@ class HabitsViewModel @Inject constructor(
                 } else {
                     _authState.value = AuthState.Unauthenticated
                     habitsJob?.cancel()
-                    _habits.value = emptyList()
+                    _habitsState.value = UiState.Success(emptyList())
                     _heatmapStats.value = emptyMap()
                 }
             }
@@ -102,12 +106,21 @@ class HabitsViewModel @Inject constructor(
 
     private fun listenToHabits(userId: String) {
         habitsJob?.cancel()
+        _habitsState.value = UiState.Loading // Показуємо крутилку перед завантаженням
+
         habitsJob = viewModelScope.launch {
-            habitRepository.getHabitsFlow(userId).collect { habitsList ->
-                _habits.value = habitsList
-                updateHeatmap(habitsList)
-                HabitWidget().updateAll(getApplication<Application>())
-            }
+            habitRepository.getHabitsFlow(userId)
+                .catch { exception ->
+                    // Якщо Firebase падає, відправляємо стан помилки
+                    _habitsState.value = UiState.Error(
+                        exception.localizedMessage ?: "Не вдалося завантажити звички"
+                    )
+                }
+                .collect { habitsList ->
+                    _habitsState.value = UiState.Success(habitsList)
+                    updateHeatmap(habitsList)
+                    HabitWidget().updateAll(getApplication<Application>())
+                }
         }
     }
 
@@ -134,7 +147,7 @@ class HabitsViewModel @Inject constructor(
 
     fun toggleHabitCompletion(habitId: Int, dateStr: String = LocalDate.now().toString()) {
         val userId = authRepository.currentUser?.uid ?: return
-        val habit = _habits.value.find { it.id == habitId } ?: return
+        val habit = currentHabits.find { it.id == habitId } ?: return
 
         val newDates = habit.completedDates.toMutableList()
         if (newDates.contains(dateStr)) newDates.remove(dateStr) else newDates.add(dateStr)
@@ -146,7 +159,7 @@ class HabitsViewModel @Inject constructor(
 
     fun toggleHabitFavorite(habitId: Int) {
         val userId = authRepository.currentUser?.uid ?: return
-        val habit = _habits.value.find { it.id == habitId } ?: return
+        val habit = currentHabits.find { it.id == habitId } ?: return
 
         viewModelScope.launch {
             habitRepository.updateHabitFavorite(userId, habitId, !habit.isFavorite)
@@ -155,7 +168,7 @@ class HabitsViewModel @Inject constructor(
 
     fun addHabit(name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
         val userId = authRepository.currentUser?.uid ?: return
-        val newId = (_habits.value.maxOfOrNull { it.id } ?: 0) + 1
+        val newId = (currentHabits.maxOfOrNull { it.id } ?: 0) + 1
         val newHabit = Habit(
             id = newId, name = name, isFavorite = false, colorHex = colorHex,
             completedDates = emptyList(), iconName = iconName, targetDays = targetDays,
@@ -174,39 +187,34 @@ class HabitsViewModel @Inject constructor(
                 reminderTime = reminderTime
             ).onSuccess {
                 handleReminder(newId, name, reminderTime)
+                _uiEvent.emit("SUCCESS")
             }.onFailure { error ->
-                _uiEvent.emit(error.localizedMessage ?: R.string.error_saving_habit.toString() ?: "Помилка збереження звички")
+                _uiEvent.emit(error.localizedMessage ?: "Помилка збереження звички")
             }
         }
     }
 
     fun updateHabit(id: Int, name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
         val userId = authRepository.currentUser?.uid ?: return
-        val currentHabit = _habits.value.find { it.id == id }
-        val updatedHabit = Habit(
-            id = id, name = name, isFavorite = currentHabit?.isFavorite ?: false, colorHex = colorHex,
-            completedDates = currentHabit?.completedDates ?: emptyList(),
-            iconName = iconName, targetDays = targetDays, frequency = frequency, reminderTime = reminderTime
-        )
+        val currentHabit = currentHabits.find { it.id == id }
 
         viewModelScope.launch {
-            viewModelScope.launch {
-                saveHabitUseCase(
-                    userId = userId,
-                    habitId = id,
-                    name = name,
-                    colorHex = colorHex,
-                    iconName = iconName,
-                    targetDays = targetDays,
-                    frequency = frequency,
-                    reminderTime = reminderTime,
-                    isFavorite = currentHabit?.isFavorite ?: false,
-                    completedDates = currentHabit?.completedDates ?: emptyList()
-                ).onSuccess {
-                    handleReminder(id, name, reminderTime)
-                }.onFailure { error ->
-                    _uiEvent.emit(error.localizedMessage ?: R.string.error_updating_habit.toString())
-                }
+            saveHabitUseCase(
+                userId = userId,
+                habitId = id,
+                name = name,
+                colorHex = colorHex,
+                iconName = iconName,
+                targetDays = targetDays,
+                frequency = frequency,
+                reminderTime = reminderTime,
+                isFavorite = currentHabit?.isFavorite ?: false,
+                completedDates = currentHabit?.completedDates ?: emptyList()
+            ).onSuccess {
+                handleReminder(id, name, reminderTime)
+                _uiEvent.emit("SUCCESS")
+            }.onFailure { error ->
+                _uiEvent.emit(error.localizedMessage ?: "Помилка оновлення звички")
             }
         }
     }

@@ -22,12 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
 import com.example.vibehabit.components.HeatmapChart
+import com.example.vibehabit.core.UiState
 import com.example.vibehabit.viewmodels.HabitsViewModel
+import kotlin.collections.emptyList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(viewModel: HabitsViewModel) {
-    val habits by viewModel.habits.collectAsState()
+    val habitsState by viewModel.habitsState.collectAsState()
+    val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
     val heatmapData by viewModel.heatmapStats.collectAsState()
 
     // Рахуємо статистику

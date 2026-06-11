@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
+import com.example.vibehabit.core.UiState
 import com.example.vibehabit.viewmodels.HabitsViewModel
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -27,7 +28,8 @@ import java.util.Locale
 @Composable
 fun CalendarScreen(viewModel: HabitsViewModel) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    val habits by viewModel.habits.collectAsState()
+    val habitsState by viewModel.habitsState.collectAsState()
+    val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
 
     val dates = remember {
         val today = LocalDate.now()

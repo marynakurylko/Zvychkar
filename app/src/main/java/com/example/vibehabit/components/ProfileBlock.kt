@@ -38,11 +38,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
 import com.example.vibehabit.viewmodels.HabitsViewModel
+import com.example.vibehabit.core.UiState
 
 @Composable
 fun ProfileBlock(viewModel: HabitsViewModel) {
     val username by viewModel.username.collectAsState()
-    val habits by viewModel.habits.collectAsState()
+    val habitsState by viewModel.habitsState.collectAsState()
+    val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
 
     // Стейт для режиму редагування імені
     var isEditing by remember { mutableStateOf(false) }

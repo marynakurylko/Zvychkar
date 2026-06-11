@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
 import com.example.vibehabit.components.HabitCalendar
 import com.example.vibehabit.components.NeonProgressRing
+import com.example.vibehabit.core.UiState
 import com.example.vibehabit.viewmodels.HabitsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,7 +29,8 @@ fun HabitDetailsScreen(
     onBackClick: () -> Unit,
     onEditClick: () -> Unit
 ) {
-    val habits by viewModel.habits.collectAsState()
+    val habitsState by viewModel.habitsState.collectAsState()
+    val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
     val habit = habits.find { it.id == habitId }
 
     if (habit == null) return

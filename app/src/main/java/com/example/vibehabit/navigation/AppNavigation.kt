@@ -199,7 +199,9 @@ fun AppNavigation(
             ) { backStackEntry ->
                 val habitId = backStackEntry.arguments?.getInt("habitId") ?: return@composable
 
-                val habits by viewModel.habits.collectAsState()
+                // ПРАВИЛЬНЕ ОТРИМАННЯ ЗВИЧОК ЧЕРЕЗ UISTATE
+                val habitsState by viewModel.habitsState.collectAsState()
+                val habits = (habitsState as? com.example.vibehabit.core.UiState.Success)?.data ?: emptyList()
                 val habit = habits.find { it.id == habitId }
 
                 if (habit != null) {

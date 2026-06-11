@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
 import com.example.vibehabit.components.DailySummaryCard
 import com.example.vibehabit.components.HabitCard
+import com.example.vibehabit.core.UiState
 import com.example.vibehabit.viewmodels.HabitsViewModel
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
@@ -45,7 +46,7 @@ fun DashboardScreen(
     onAddHabitClick: () -> Unit,
     onHabitClick: (Int) -> Unit
 ) {
-    val habits by viewModel.habits.collectAsState()
+    val habitsState by viewModel.habitsState.collectAsState()
     val username by viewModel.username.collectAsState()
     val isEmailVerified by viewModel.isEmailVerified.collectAsState()
     var showConfetti by remember { mutableStateOf(false) }
@@ -66,13 +67,12 @@ fun DashboardScreen(
     val today = LocalDate.now()
     val todayStr = today.toString()
 
-    val sortedHabits = habits.sortedWith(
-        compareBy<com.example.vibehabit.Habit> { it.completedDates.contains(todayStr) }
-            .thenByDescending { it.isFavorite }
-            .thenBy { it.id }
-    )
+    // Витягуємо безпечний список для загальної статистики (навіть під час завантаження)
+    val currentHabits = (habitsState as? UiState.Success)?.data ?: emptyList()
+    val totalHabitsToday = currentHabits.size
+    val completedHabitsToday = currentHabits.count { it.completedDates.contains(todayStr) }
 
-    // Форматування дати тепер використовує ресурс
+    // Форматування дати
     val dateFormat = stringResource(R.string.dashboard_date_format)
     val dateFormatter = DateTimeFormatter.ofPattern(dateFormat)
     val dateText = today.format(dateFormatter).replaceFirstChar { it.uppercase() }
@@ -87,14 +87,12 @@ fun DashboardScreen(
         position = Position.Relative(0.5, 0.3)
     )
 
-    val totalHabitsToday = sortedHabits.size
-    val completedHabitsToday = sortedHabits.count { it.completedDates.contains(todayStr) }
-
     val sendingMsg = stringResource(R.string.sending_label)
     val successMsg = stringResource(R.string.email_sent_success)
     val checkingMsg = stringResource(R.string.checking_label)
     val notVerifiedMsg = stringResource(R.string.email_not_verified)
 
+    // --- ОПТИМІЗАЦІЯ ЛЯМБД ДЛЯ СПИСКУ ЗВИЧОК ---
     val onFavoriteToggle: (Int) -> Unit = remember(viewModel) {
         { habitId -> viewModel.toggleHabitFavorite(habitId) }
     }
@@ -142,7 +140,7 @@ fun DashboardScreen(
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Add, 
+                    imageVector = Icons.Filled.Add,
                     contentDescription = stringResource(R.string.add_habit_desc)
                 )
             }
@@ -199,14 +197,13 @@ fun DashboardScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
-                                // БЛОК ПОВІДОМЛЕННЯ (Успіх / Помилка)
                                 if (bannerMessage != null) {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = bannerMessage!!,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = if (isBannerError) MaterialTheme.colorScheme.error else Color(0xFF4CAF50) // Червоний або зелений
+                                        color = if (isBannerError) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
                                     )
                                 }
 
@@ -216,10 +213,9 @@ fun DashboardScreen(
                                     horizontalArrangement = Arrangement.End,
                                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                                 ) {
-                                    // КНОПКА "НАДІСЛАТИ ЩЕ РАЗ"
                                     TextButton(
                                         onClick = {
-                                            resendCooldown = 30 // Запускаємо кулдаун на 30 сек
+                                            resendCooldown = 30
                                             bannerMessage = sendingMsg
                                             isBannerError = false
 
@@ -231,11 +227,11 @@ fun DashboardScreen(
                                                 onError = { error ->
                                                     isBannerError = true
                                                     bannerMessage = error
-                                                    resendCooldown = 0 // Скидаємо кулдаун, якщо сталася помилка
+                                                    resendCooldown = 0
                                                 }
                                             )
                                         },
-                                        enabled = resendCooldown == 0 // Блокуємо кнопку, якщо таймер іде
+                                        enabled = resendCooldown == 0
                                     ) {
                                         Text(
                                             text = if (resendCooldown > 0) stringResource(R.string.resend_cooldown, resendCooldown) else stringResource(R.string.resend_email),
@@ -245,7 +241,6 @@ fun DashboardScreen(
 
                                     Spacer(modifier = Modifier.width(8.dp))
 
-                                    // КНОПКА "Я ПІДТВЕРДИВ(ЛА)"
                                     Button(
                                         onClick = {
                                             bannerMessage = checkingMsg
@@ -274,50 +269,94 @@ fun DashboardScreen(
                     }
                 }
 
-                // ДОДАЄМО ПЕРЕВІРКУ НА ПОРОЖНІЙ СТАН
-                if (sortedHabits.isEmpty()) {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 48.dp),
-                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = "🚀",
-                                fontSize = 64.sp,
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.empty_habits_title),
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = stringResource(R.string.empty_habits_desc),
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 32.dp)
-                            )
+                // ВІДОБРАЖЕННЯ СПИСКУ ЗАЛЕЖНО ВІД СТАНУ (Loading / Error / Success)
+                when (val state = habitsState) {
+                    is UiState.Loading -> {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 48.dp),
+                                contentAlignment = androidx.compose.ui.Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            }
                         }
                     }
-                } else {
-                    // ЯКЩО ЗВИЧКИ Є - ПОКАЗУЄМО ЇХ (ТВІЙ ІСНУЮЧИЙ КОД)
-                    items(items = sortedHabits, key = { it.id }) { habit ->
-                        val isCompletedToday = habit.completedDates.contains(todayStr)
-
-                        HabitCard(
-                            habit = habit,
-                            onCheckedChange = { onHabitToggle(habit, isCompletedToday) },
-                            onFavoriteClick = { onFavoriteToggle(habit.id) },
-                            onDeleteClick = { onDeleteHabit(habit.id) },
-                            onCardClick = { onCardClicked(habit.id) },
-                            modifier = Modifier.animateItem()
+                    is UiState.Error -> {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 48.dp),
+                                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                            ) {
+                                Text("⚠️", fontSize = 48.sp, modifier = Modifier.padding(bottom = 16.dp))
+                                Text(
+                                    text = "Халепа!",
+                                    fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    text = state.message,
+                                    fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+                        }
+                    }
+                    is UiState.Success -> {
+                        val habitsList = state.data
+                        val sortedHabits = habitsList.sortedWith(
+                            compareBy<com.example.vibehabit.Habit> { it.completedDates.contains(todayStr) }
+                                .thenByDescending { it.isFavorite }
+                                .thenBy { it.id }
                         )
+
+                        if (sortedHabits.isEmpty()) {
+                            item {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 48.dp),
+                                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "🚀",
+                                        fontSize = 64.sp,
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.empty_habits_title),
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.empty_habits_desc),
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        modifier = Modifier.padding(horizontal = 32.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            items(items = sortedHabits, key = { it.id }) { habit ->
+                                val isCompletedToday = habit.completedDates.contains(todayStr)
+
+                                HabitCard(
+                                    habit = habit,
+                                    onCheckedChange = { onHabitToggle(habit, isCompletedToday) },
+                                    onFavoriteClick = { onFavoriteToggle(habit.id) },
+                                    onDeleteClick = { onDeleteHabit(habit.id) },
+                                    onCardClick = { onCardClicked(habit.id) },
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -350,9 +389,7 @@ fun DashboardScreen(
                     confirmButton = {
                         TextButton(
                             onClick = {
-                                // 1. Викликаємо метод ViewModel для реального видалення
                                 viewModel.deleteHabit(habitToDelete!!)
-                                // 2. Закриваємо модалку
                                 habitToDelete = null
                             }
                         ) {
