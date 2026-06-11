@@ -1,7 +1,9 @@
 package com.example.vibehabit
 
+import androidx.compose.runtime.Immutable
 import java.time.LocalDate
 
+@Immutable
 data class Habit(
     val id: Int = 0,
     val name: String = "",

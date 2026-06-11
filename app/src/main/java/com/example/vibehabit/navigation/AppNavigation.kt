@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.vibehabit.R
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.vibehabit.screens.AnalyticsScreen
 import com.example.vibehabit.screens.OnboardingScreen
 import com.example.vibehabit.auth.AuthState
@@ -38,7 +39,7 @@ fun AppNavigation(
     onThemeChange: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
-    val viewModel: HabitsViewModel = viewModel()
+    val viewModel: HabitsViewModel = hiltViewModel()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
