@@ -1,5 +1,6 @@
 package com.example.vibehabit.screens
 
+import android.app.TimePickerDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -14,26 +15,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vibehabit.Habit
+import com.example.vibehabit.R
 import com.example.vibehabit.components.ColorSelector
 import com.example.vibehabit.components.IconSelector
 import com.example.vibehabit.components.NumberStepper
 import com.example.vibehabit.components.SegmentedControl
 import com.example.vibehabit.ui.theme.HabitTrackerTheme
-import com.example.vibehabit.Habit
-import androidx.compose.ui.res.stringResource
-import com.example.vibehabit.R
-import android.app.TimePickerDialog
-import androidx.compose.ui.platform.LocalContext
+import com.example.vibehabit.viewmodels.HabitsViewModel
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,7 +40,9 @@ import java.util.Calendar
 fun CreateHabitScreen(
     habitToEdit: Habit? = null,
     onBackClick: () -> Unit,
-    onSaveClick: (name: String, colorHex: String, iconName: String, frequency: String, targetDays: Int, reminderTime: String?) -> Unit) {
+    onSaveClick: (name: String, colorHex: String, iconName: String, frequency: String, targetDays: Int, reminderTime: String?) -> Unit,
+    viewModel: HabitsViewModel = androidx.lifecycle.viewmodel.compose.viewModel() // 1. ДОДАЛИ VIEWMODEL
+) {
     val neonColors = listOf("#9D4EDD", "#00E5FF", "#FF007F", "#00FF7F", "#FF9800")
     val icons = listOf(Icons.Filled.Bolt, Icons.Filled.Favorite, Icons.Filled.DirectionsBike, Icons.Filled.Book)
     val iconNames = listOf("Bolt", "Favorite", "Bike", "Book")
@@ -74,13 +75,27 @@ fun CreateHabitScreen(
     }
 
     var customDays by remember { mutableStateOf(setOf<Int>()) }
-
     var isReminderEnabled by remember { mutableStateOf(habitToEdit?.reminderTime != null) }
     var reminderTime by remember { mutableStateOf(habitToEdit?.reminderTime ?: "09:00") }
 
     val context = LocalContext.current
 
-    // Діалог вибору часу (Android TimePickerDialog)
+    // 2. ДОДАЛИ СТАН ЗАВАНТАЖЕННЯ ТА СНЕКБАР
+    var isSaving by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // 3. СЛУХАЄМО ПОДІЇ З VIEWMODEL
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { message ->
+            isSaving = false // Прийшла відповідь - вимикаємо крутилку
+            if (message == "SUCCESS") {
+                onBackClick() // Успіх! Закриваємо екран
+            } else {
+                snackbarHostState.showSnackbar(message) // Помилка! Показуємо банер
+            }
+        }
+    }
+
     val timePickerDialog = remember {
         val parts = reminderTime.split(":")
         val defaultHour = parts.getOrNull(0)?.toIntOrNull() ?: 9
@@ -89,17 +104,15 @@ fun CreateHabitScreen(
         TimePickerDialog(
             context,
             { _, hourOfDay, minute ->
-                // Форматуємо час з нулями (наприклад, 09:05)
                 val formattedTime = String.format("%02d:%02d", hourOfDay, minute)
                 reminderTime = formattedTime
             },
-            defaultHour,
-            defaultMinute,
-            true // 24-годинний формат
+            defaultHour, defaultMinute, true
         )
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }, // 4. ПІДКЛЮЧИЛИ СНЕКБАР ДО UI
         topBar = {
             TopAppBar(
                 title = { Text(screenTitle, fontWeight = FontWeight.Bold, fontSize = 20.sp) },
@@ -124,6 +137,7 @@ fun CreateHabitScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // ... Ввесь твій попередній UI (TextField, IconSelector, ColorSelector, тощо) ...
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.habit_title_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 TextField(
@@ -144,11 +158,7 @@ fun CreateHabitScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.habit_icon_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
-                IconSelector(
-                    icons = icons,
-                    selectedIndex = selectedIconIndex,
-                    onIconSelected = { selectedIconIndex = it }
-                )
+                IconSelector(icons = icons, selectedIndex = selectedIconIndex, onIconSelected = { selectedIconIndex = it })
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -160,23 +170,11 @@ fun CreateHabitScreen(
                 Text(stringResource(R.string.habit_frequency_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 SegmentedControl(items = frequencyLabels, selectedIndex = selectedFrequencyIndex, onItemSelection = { selectedFrequencyIndex = it })
 
-                AnimatedVisibility(
-                    visible = frequencies[selectedFrequencyIndex] == "Custom",
-                    enter = expandVertically(),
-                    exit = shrinkVertically()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+                AnimatedVisibility(visible = frequencies[selectedFrequencyIndex] == "Custom", enter = expandVertically(), exit = shrinkVertically()) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         val weekDays = listOf(
-                            stringResource(R.string.day_mon),
-                            stringResource(R.string.day_tue),
-                            stringResource(R.string.day_wed),
-                            stringResource(R.string.day_thu),
-                            stringResource(R.string.day_fri),
-                            stringResource(R.string.day_sat),
-                            stringResource(R.string.day_sun)
+                            stringResource(R.string.day_mon), stringResource(R.string.day_tue), stringResource(R.string.day_wed),
+                            stringResource(R.string.day_thu), stringResource(R.string.day_fri), stringResource(R.string.day_sat), stringResource(R.string.day_sun)
                         )
                         weekDays.forEachIndexed { index, day ->
                             val dayNumber = index + 1
@@ -186,69 +184,34 @@ fun CreateHabitScreen(
                                     .size(40.dp)
                                     .clip(CircleShape)
                                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable {
-                                        customDays = if (isSelected) customDays - dayNumber else customDays + dayNumber
-                                    },
+                                    .clickable { customDays = if (isSelected) customDays - dayNumber else customDays + dayNumber },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = day,
-                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 12.sp, fontWeight = FontWeight.Bold
-                                )
+                                Text(day, color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.target_count_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 NumberStepper(value = targetDays, onValueChange = { targetDays = it })
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Рядок зі Світчем
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text(stringResource(R.string.reminders_enable_label), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                         Text(stringResource(R.string.reminders_enable_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(
-                        checked = isReminderEnabled,
-                        onCheckedChange = { isReminderEnabled = it },
-                        colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary)
-                    )
+                    Switch(checked = isReminderEnabled, onCheckedChange = { isReminderEnabled = it }, colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary))
                 }
 
-                // Блок з часом, який плавно виїжджає
-                AnimatedVisibility(
-                    visible = isReminderEnabled,
-                    enter = expandVertically(),
-                    exit = shrinkVertically()
-                ) {
+                AnimatedVisibility(visible = isReminderEnabled, enter = expandVertically(), exit = shrinkVertically()) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(12.dp))
-                            .clickable { timePickerDialog.show() }
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background, RoundedCornerShape(12.dp)).clickable { timePickerDialog.show() }.padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.Notifications, contentDescription = stringResource(R.string.time_desc), tint = MaterialTheme.colorScheme.primary)
@@ -260,20 +223,17 @@ fun CreateHabitScreen(
                 }
             }
 
+            // 5. ОНОВЛЕНА КНОПКА ЗБЕРЕЖЕННЯ
             Button(
                 onClick = {
-                    if (habitName.isNotBlank()) {
+                    if (habitName.isNotBlank() && !isSaving) {
+                        isSaving = true // Запускаємо крутилку
                         val frequencyLabel = if (frequencies[selectedFrequencyIndex] == "Custom") {
                             context.getString(R.string.custom_frequency_format, customDays.size)
                         } else frequencies[selectedFrequencyIndex]
-
-                        // Формуємо фінальний час (або null)
                         val finalReminderTime = if (isReminderEnabled) reminderTime else null
 
-                        onSaveClick(
-                            habitName, selectedColor, iconNames[selectedIconIndex],
-                            frequencyLabel, targetDays, finalReminderTime // Передаємо час!
-                        )
+                        onSaveClick(habitName, selectedColor, iconNames[selectedIconIndex], frequencyLabel, targetDays, finalReminderTime)
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(64.dp),
@@ -282,9 +242,13 @@ fun CreateHabitScreen(
                     containerColor = Color(android.graphics.Color.parseColor(selectedColor)),
                     disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
-                enabled = habitName.isNotBlank()
+                enabled = habitName.isNotBlank() && !isSaving
             ) {
-                Text(stringResource(R.string.save_habit_button), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                if (isSaving) {
+                    CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Color.White, strokeWidth = 3.dp)
+                } else {
+                    Text(stringResource(R.string.save_habit_button), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
         }
     }

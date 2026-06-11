@@ -12,8 +12,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.vibehabit.Habit
 import com.example.vibehabit.R
 import com.example.vibehabit.auth.AuthState
+import com.example.vibehabit.domain.usecase.SaveHabitUseCase
 import com.example.vibehabit.repository.AuthRepository
 import com.example.vibehabit.repository.HabitRepository
+import com.example.vibehabit.repository.UserPreferencesRepository
 import com.example.vibehabit.widget.HabitWidget
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.NonCancellable
@@ -24,20 +26,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
-val Context.dataStore by preferencesDataStore(name = "habits_prefs")
 
 @HiltViewModel
 class HabitsViewModel @Inject constructor(
     application: Application,
-    private val authRepository: AuthRepository,     // ІНЖЕКТИМО АВТОРИЗАЦІЮ
-    private val habitRepository: HabitRepository    // ІНЖЕКТИМО ЗВИЧКИ
+    private val authRepository: AuthRepository,
+    private val habitRepository: HabitRepository,
+    private val saveHabitUseCase: SaveHabitUseCase,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : AndroidViewModel(application) {
-
-    private val dataStore = application.dataStore
-    private val ONBOARDING_KEY = booleanPreferencesKey("is_onboarding_completed")
-    private val USERNAME_KEY = stringPreferencesKey("username")
-
     private val _isOnboardingCompleted = MutableStateFlow<Boolean?>(null)
     val isOnboardingCompleted: StateFlow<Boolean?> = _isOnboardingCompleted.asStateFlow()
 
@@ -57,16 +58,25 @@ class HabitsViewModel @Inject constructor(
     private val _isEmailVerified = MutableStateFlow(true)
     val isEmailVerified: StateFlow<Boolean> = _isEmailVerified.asStateFlow()
 
+    // НОВИЙ КАНАЛ ДЛЯ ПОМИЛОК ТА ПОДІЙ
+    private val _uiEvent = MutableSharedFlow<String>()
+    val uiEvent: SharedFlow<String> = _uiEvent.asSharedFlow()
+
     private var habitsJob: kotlinx.coroutines.Job? = null
+
 
     init {
         viewModelScope.launch {
-            dataStore.data.collect { preferences ->
-                _isOnboardingCompleted.value = preferences[ONBOARDING_KEY] ?: false
-                _username.value = preferences[USERNAME_KEY] ?: defaultUser
+            userPreferencesRepository.isOnboardingCompletedFlow.collect { isCompleted ->
+                _isOnboardingCompleted.value = isCompleted ?: false
             }
         }
-        observeAuthState() // Підписуємось на авторизацію при старті
+        viewModelScope.launch {
+            userPreferencesRepository.usernameFlow.collect { name ->
+                _username.value = name ?: defaultUser
+            }
+        }
+        observeAuthState()
     }
 
     private fun observeAuthState() {
@@ -115,11 +125,11 @@ class HabitsViewModel @Inject constructor(
     }
 
     fun completeOnboarding() {
-        viewModelScope.launch { dataStore.edit { it[ONBOARDING_KEY] = true } }
+        viewModelScope.launch { userPreferencesRepository.completeOnboarding() }
     }
 
     fun updateUsername(newName: String) {
-        viewModelScope.launch { dataStore.edit { it[USERNAME_KEY] = newName } }
+        viewModelScope.launch { userPreferencesRepository.updateUsername(newName) }
     }
 
     fun toggleHabitCompletion(habitId: Int, dateStr: String = LocalDate.now().toString()) {
@@ -153,8 +163,20 @@ class HabitsViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            habitRepository.saveHabit(userId, newHabit)
-            handleReminder(newId, name, reminderTime)
+            saveHabitUseCase(
+                userId = userId,
+                habitId = newId,
+                name = name,
+                colorHex = colorHex,
+                iconName = iconName,
+                targetDays = targetDays,
+                frequency = frequency,
+                reminderTime = reminderTime
+            ).onSuccess {
+                handleReminder(newId, name, reminderTime)
+            }.onFailure { error ->
+                _uiEvent.emit(error.localizedMessage ?: R.string.error_saving_habit.toString() ?: "Помилка збереження звички")
+            }
         }
     }
 
@@ -168,8 +190,24 @@ class HabitsViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            habitRepository.saveHabit(userId, updatedHabit)
-            handleReminder(id, name, reminderTime)
+            viewModelScope.launch {
+                saveHabitUseCase(
+                    userId = userId,
+                    habitId = id,
+                    name = name,
+                    colorHex = colorHex,
+                    iconName = iconName,
+                    targetDays = targetDays,
+                    frequency = frequency,
+                    reminderTime = reminderTime,
+                    isFavorite = currentHabit?.isFavorite ?: false,
+                    completedDates = currentHabit?.completedDates ?: emptyList()
+                ).onSuccess {
+                    handleReminder(id, name, reminderTime)
+                }.onFailure { error ->
+                    _uiEvent.emit(error.localizedMessage ?: R.string.error_updating_habit.toString())
+                }
+            }
         }
     }
 

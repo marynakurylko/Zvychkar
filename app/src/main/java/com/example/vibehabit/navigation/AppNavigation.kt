@@ -172,7 +172,6 @@ fun AppNavigation(
                     onBackClick = { navController.popBackStack() },
                     onSaveClick = { name, colorHex, iconName, frequency, targetDays, finalReminderTime ->
                         viewModel.addHabit(name, colorHex, iconName, targetDays, frequency, finalReminderTime)
-                        navController.popBackStack()
                     }
                 )
             }
@@ -208,7 +207,6 @@ fun AppNavigation(
                         onBackClick = { navController.popBackStack() },
                         onSaveClick = { name, colorHex, iconName, frequency, targetDays, finalReminderTime ->
                             viewModel.updateHabit(habit.id, name, colorHex, iconName, targetDays, frequency, finalReminderTime)
-                            navController.popBackStack()
                         }
                     )
                 }
