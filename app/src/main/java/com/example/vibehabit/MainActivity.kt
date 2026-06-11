@@ -20,7 +20,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vibehabit.navigation.AppNavigation
 import com.example.vibehabit.ui.theme.HabitTrackerTheme
 import com.example.vibehabit.viewmodels.SettingsViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(

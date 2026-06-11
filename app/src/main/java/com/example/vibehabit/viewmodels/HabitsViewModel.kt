@@ -6,33 +6,35 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vibehabit.Habit
+import com.example.vibehabit.R
+import com.example.vibehabit.auth.AuthState
+import com.example.vibehabit.repository.AuthRepository
+import com.example.vibehabit.repository.HabitRepository
+import com.example.vibehabit.widget.HabitWidget
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import androidx.glance.appwidget.updateAll
-import com.example.vibehabit.widget.HabitWidget
-import com.example.vibehabit.auth.AuthState
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.tasks.await
-import android.util.Log
-import com.example.vibehabit.R
-import kotlinx.coroutines.NonCancellable
-import com.google.firebase.auth.GoogleAuthProvider
+import java.time.LocalDate
+import javax.inject.Inject
 
 val Context.dataStore by preferencesDataStore(name = "habits_prefs")
 
-class HabitsViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class HabitsViewModel @Inject constructor(
+    application: Application,
+    private val authRepository: AuthRepository,     // ІНЖЕКТИМО АВТОРИЗАЦІЮ
+    private val habitRepository: HabitRepository    // ІНЖЕКТИМО ЗВИЧКИ
+) : AndroidViewModel(application) {
 
     private val dataStore = application.dataStore
-    private val THEME_KEY = stringPreferencesKey("app_theme_mode")
     private val ONBOARDING_KEY = booleanPreferencesKey("is_onboarding_completed")
     private val USERNAME_KEY = stringPreferencesKey("username")
 
@@ -49,15 +51,13 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     private val _heatmapStats = MutableStateFlow<Map<LocalDate, Int>>(emptyMap())
     val heatmapStats: StateFlow<Map<LocalDate, Int>> = _heatmapStats.asStateFlow()
 
-    private val auth = FirebaseAuth.getInstance()
-    private val firestore = FirebaseFirestore.getInstance()
-    private var habitsListener: ListenerRegistration? = null
-
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    private val _isEmailVerified = MutableStateFlow(true) // За замовчуванням true, щоб не блимало
+    private val _isEmailVerified = MutableStateFlow(true)
     val isEmailVerified: StateFlow<Boolean> = _isEmailVerified.asStateFlow()
+
+    private var habitsJob: kotlinx.coroutines.Job? = null
 
     init {
         viewModelScope.launch {
@@ -66,49 +66,39 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
                 _username.value = preferences[USERNAME_KEY] ?: defaultUser
             }
         }
-        checkAuthState()
+        observeAuthState() // Підписуємось на авторизацію при старті
     }
 
-    private fun checkAuthState() {
-        auth.addAuthStateListener { firebaseAuth ->
-            val currentUser = firebaseAuth.currentUser
-            if (currentUser != null) {
-                _authState.value = AuthState.Authenticated(currentUser)
-                _isEmailVerified.value = currentUser.isEmailVerified // ЗЧИТУЄМО СТАТУС
-                listenToHabits(currentUser.uid)
+    private fun observeAuthState() {
+        viewModelScope.launch {
+            authRepository.getAuthStateFlow().collect { user ->
+                if (user != null) {
+                    _authState.value = AuthState.Authenticated(user)
+                    _isEmailVerified.value = user.isEmailVerified
+                    listenToHabits(user.uid)
 
-                if (_username.value == defaultUser && currentUser.email != null) {
-                    val emailPrefix = currentUser.email!!.substringBefore("@")
-                    updateUsername(emailPrefix)
+                    if (_username.value == defaultUser && user.email != null) {
+                        updateUsername(user.email!!.substringBefore("@"))
+                    }
+                } else {
+                    _authState.value = AuthState.Unauthenticated
+                    habitsJob?.cancel()
+                    _habits.value = emptyList()
+                    _heatmapStats.value = emptyMap()
                 }
-            } else {
-                _authState.value = AuthState.Unauthenticated
-                habitsListener?.remove()
-                _habits.value = emptyList()
-                _heatmapStats.value = emptyMap()
             }
         }
     }
 
     private fun listenToHabits(userId: String) {
-        habitsListener?.remove()
-        habitsListener = firestore.collection("users")
-            .document(userId)
-            .collection("habits")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
-
-                val habitsList = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(Habit::class.java)
-                }.sortedBy { it.id }
-
+        habitsJob?.cancel()
+        habitsJob = viewModelScope.launch {
+            habitRepository.getHabitsFlow(userId).collect { habitsList ->
                 _habits.value = habitsList
                 updateHeatmap(habitsList)
-
-                viewModelScope.launch {
-                    HabitWidget().updateAll(getApplication<Application>())
-                }
+                HabitWidget().updateAll(getApplication<Application>())
             }
+        }
     }
 
     private fun updateHeatmap(habitsList: List<Habit>) {
@@ -133,28 +123,28 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun toggleHabitCompletion(habitId: Int, dateStr: String = LocalDate.now().toString()) {
-        val userId = auth.currentUser?.uid ?: return
+        val userId = authRepository.currentUser?.uid ?: return
         val habit = _habits.value.find { it.id == habitId } ?: return
 
         val newDates = habit.completedDates.toMutableList()
         if (newDates.contains(dateStr)) newDates.remove(dateStr) else newDates.add(dateStr)
 
-        firestore.collection("users").document(userId)
-            .collection("habits").document(habitId.toString())
-            .update("completedDates", newDates)
+        viewModelScope.launch {
+            habitRepository.updateHabitDates(userId, habitId, newDates)
+        }
     }
 
     fun toggleHabitFavorite(habitId: Int) {
-        val userId = auth.currentUser?.uid ?: return
+        val userId = authRepository.currentUser?.uid ?: return
         val habit = _habits.value.find { it.id == habitId } ?: return
 
-        firestore.collection("users").document(userId)
-            .collection("habits").document(habitId.toString())
-            .update("isFavorite", !habit.isFavorite)
+        viewModelScope.launch {
+            habitRepository.updateHabitFavorite(userId, habitId, !habit.isFavorite)
+        }
     }
 
     fun addHabit(name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
-        val userId = auth.currentUser?.uid ?: return
+        val userId = authRepository.currentUser?.uid ?: return
         val newId = (_habits.value.maxOfOrNull { it.id } ?: 0) + 1
         val newHabit = Habit(
             id = newId, name = name, isFavorite = false, colorHex = colorHex,
@@ -162,15 +152,14 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             frequency = frequency, reminderTime = reminderTime
         )
 
-        firestore.collection("users").document(userId)
-            .collection("habits").document(newId.toString())
-            .set(newHabit)
-
-        handleReminder(newId, name, reminderTime)
+        viewModelScope.launch {
+            habitRepository.saveHabit(userId, newHabit)
+            handleReminder(newId, name, reminderTime)
+        }
     }
 
     fun updateHabit(id: Int, name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
-        val userId = auth.currentUser?.uid ?: return
+        val userId = authRepository.currentUser?.uid ?: return
         val currentHabit = _habits.value.find { it.id == id }
         val updatedHabit = Habit(
             id = id, name = name, isFavorite = currentHabit?.isFavorite ?: false, colorHex = colorHex,
@@ -178,109 +167,63 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             iconName = iconName, targetDays = targetDays, frequency = frequency, reminderTime = reminderTime
         )
 
-        firestore.collection("users").document(userId)
-            .collection("habits").document(id.toString())
-            .set(updatedHabit)
-
-        handleReminder(id, name, reminderTime)
+        viewModelScope.launch {
+            habitRepository.saveHabit(userId, updatedHabit)
+            handleReminder(id, name, reminderTime)
+        }
     }
 
     fun deleteHabit(habitId: Int) {
-        val userId = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(userId)
-            .collection("habits").document(habitId.toString())
-            .delete()
-
-        com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(getApplication<Application>(), habitId)
+        val userId = authRepository.currentUser?.uid ?: return
+        viewModelScope.launch {
+            habitRepository.deleteHabit(userId, habitId)
+            com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(getApplication<Application>(), habitId)
+        }
     }
+
+    // --- AUTH МЕТОДИ ---
 
     fun signInWithGoogle(idToken: String, onError: (String) -> Unit) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-
-        auth.signInWithCredential(credential)
-            .addOnFailureListener { exception ->
-                onError(exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_google_sign_in))
-            }
-    }
-
-    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            onError(getApplication<Application>().getString(R.string.error_user_not_found))
-            return
-        }
-        val userId = currentUser.uid
-
         viewModelScope.launch {
-            try {
-                Log.d("AuthDebug", "Початок видалення. UID: $userId")
-
-                // ЗАХИЩЕНИЙ БЛОК: Не буде скасований, навіть якщо екран закриється
-                withContext(NonCancellable) {
-                    val habitsRef = firestore.collection("users").document(userId).collection("habits")
-                    val snapshot = habitsRef.get().await()
-                    Log.d("AuthDebug", "Знайдено звичок для видалення: ${snapshot.documents.size}")
-
-                    val batch = firestore.batch()
-                    for (doc in snapshot.documents) {
-                        batch.delete(doc.reference)
-                    }
-                    batch.delete(firestore.collection("users").document(userId))
-
-                    batch.commit().await()
-                    Log.d("AuthDebug", "Дані Firestore успішно видалено")
-
-                    currentUser.delete().await()
-                    Log.d("AuthDebug", "Акаунт успішно видалено з Firebase Auth")
-                }
-
-                onSuccess()
-
-            } catch (e: Exception) {
-                Log.e("AuthDebug", "Помилка під час видалення", e)
-                val errorMessage = e.message ?: ""
-
-                if (e is com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException ||
-                    errorMessage.contains("CREDENTIAL_TOO_OLD_LOGIN_AGAIN") ||
-                    errorMessage.contains("recent login")) {
-
-                    onError(getApplication<Application>().getString(R.string.error_reauth_required))
-                } else {
-                    onError("${getApplication<Application>().getString(R.string.error_title).substringBefore(" ")}: ${e.localizedMessage}")
-                }
+            authRepository.signInWithGoogle(idToken).onFailure { e ->
+                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_google_sign_in))
             }
         }
     }
+
     fun signUpWithEmail(email: String, pass: String, onError: (String) -> Unit) {
-        auth.createUserWithEmailAndPassword(email, pass)
-            .addOnSuccessListener {
-                // Відправляємо лист одразу після успішної реєстрації
-                auth.currentUser?.sendEmailVerification()
+        viewModelScope.launch {
+            authRepository.signUpWithEmail(email, pass).onFailure { e ->
+                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_registration))
             }
-            .addOnFailureListener { exception ->
-                onError(exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_registration))
-            }
+        }
     }
 
-    // Функція для ручного оновлення профілю (щоб перевірити, чи юзер вже клікнув на лінк у листі)
-    // Оновлена функція з колбеками результату
+    fun signInWithEmail(email: String, pass: String, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            authRepository.signInWithEmail(email, pass).onFailure { e ->
+                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_sign_in))
+            }
+        }
+    }
+
     fun reloadUser(onResult: (Boolean) -> Unit, onError: (String) -> Unit) {
-        auth.currentUser?.reload()
-            ?.addOnSuccessListener {
-                val isVerified = auth.currentUser?.isEmailVerified == true
-                _isEmailVerified.value = isVerified
-                onResult(isVerified) // Повертаємо актуальний статус в UI
-            }
-            ?.addOnFailureListener { e ->
-                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_reload_user))
-            }
+        viewModelScope.launch {
+            authRepository.reloadUser()
+                .onSuccess { isVerified ->
+                    _isEmailVerified.value = isVerified
+                    onResult(isVerified)
+                }
+                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_reload_user)) }
+        }
     }
 
-    // Якщо лист загубився і треба відправити ще раз
     fun resendVerificationEmail(onSuccess: () -> Unit, onError: (String) -> Unit) {
-        auth.currentUser?.sendEmailVerification()
-            ?.addOnSuccessListener { onSuccess() }
-            ?.addOnFailureListener { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_resend_email)) }
+        viewModelScope.launch {
+            authRepository.resendVerificationEmail()
+                .onSuccess { onSuccess() }
+                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_resend_email)) }
+        }
     }
 
     fun resetPassword(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
@@ -288,21 +231,57 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             onError(getApplication<Application>().getString(R.string.error_enter_email))
             return
         }
-
-        auth.sendPasswordResetEmail(email)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { exception ->
-                onError(exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_reset_password_send))
-            }
+        viewModelScope.launch {
+            authRepository.resetPassword(email)
+                .onSuccess { onSuccess() }
+                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_reset_password_send)) }
+        }
     }
 
-    fun signInWithEmail(email: String, pass: String, onError: (String) -> Unit) {
-        auth.signInWithEmailAndPassword(email, pass)
-            .addOnFailureListener { exception -> onError(exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_sign_in)) }
+    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val userId = authRepository.currentUser?.uid
+        if (userId == null) {
+            onError(getApplication<Application>().getString(R.string.error_user_not_found))
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                withContext(NonCancellable) {
+                    habitRepository.deleteAllUserData(userId).getOrThrow()
+                    authRepository.deleteAccount().getOrThrow()
+                }
+                onSuccess()
+            } catch (e: Exception) {
+                val errorMessage = e.message ?: ""
+                if (e is com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException ||
+                    errorMessage.contains("CREDENTIAL_TOO_OLD_LOGIN_AGAIN") ||
+                    errorMessage.contains("recent login")) {
+                    onError(getApplication<Application>().getString(R.string.error_reauth_required))
+                } else {
+                    onError("${getApplication<Application>().getString(R.string.error_title).substringBefore(" ")}: ${e.localizedMessage}")
+                }
+            }
+        }
     }
 
     fun signOut() {
-        auth.signOut()
+        authRepository.signOut()
+    }
+
+    fun sendFeedback(message: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val user = authRepository.currentUser
+        if (user == null) {
+            onError(getApplication<Application>().getString(R.string.error_not_authorized))
+            return
+        }
+
+        viewModelScope.launch {
+            val email = user.email ?: getApplication<Application>().getString(R.string.no_email_provided)
+            habitRepository.sendFeedback(user.uid, email, message)
+                .onSuccess { onSuccess() }
+                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_feedback_send)) }
+        }
     }
 
     private fun handleReminder(habitId: Int, habitName: String, reminderTime: String?) {
@@ -312,36 +291,10 @@ class HabitsViewModel(application: Application) : AndroidViewModel(application) 
             if (parts.size == 2) {
                 val hour = parts[0].toIntOrNull() ?: 9
                 val minute = parts[1].toIntOrNull() ?: 0
-                com.example.vibehabit.notifications.NotificationHelper.scheduleHabitReminder(
-                    context, habitId, habitName, hour, minute
-                )
+                com.example.vibehabit.notifications.NotificationHelper.scheduleHabitReminder(context, habitId, habitName, hour, minute)
             }
         } else {
             com.example.vibehabit.notifications.NotificationHelper.cancelHabitReminder(context, habitId)
         }
-    }
-
-    fun sendFeedback(message: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            onError(getApplication<Application>().getString(R.string.error_not_authorized))
-            return
-        }
-
-        // Формуємо об'єкт із даними відгуку
-        val feedbackData = hashMapOf(
-            "userId" to currentUser.uid,
-            "email" to (currentUser.email ?: getApplication<Application>().getString(R.string.no_email_provided)),
-            "message" to message,
-            "timestamp" to com.google.firebase.firestore.FieldValue.serverTimestamp() // Автоматичний точний час сервера
-        )
-
-        // Зберігаємо в нову колекцію "feedback"
-        firestore.collection("feedback")
-            .add(feedbackData)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e ->
-                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_feedback_send))
-            }
     }
 }
