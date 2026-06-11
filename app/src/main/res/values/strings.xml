@@ -1,3 +1,177 @@
 <resources>
     <string name="app_name">VibeHabit</string>
+    <string name="settings_title">Settings</string>
+    <string name="language_english">English</string>
+    <string name="language_ukrainian">Українська</string>
+    <string name="choose_language">Choose Language</string>
+    <string name="dark_theme_label">Dark Theme</string>
+
+    <string name="nav_home_desc">Home</string>
+    <string name="nav_habits_label">Habits</string>
+    <string name="nav_calendar_desc">Calendar</string>
+    <string name="nav_calendar_label">Calendar</string>
+    <string name="nav_settings_desc">Settings</string>
+    <string name="nav_settings_label">Settings</string>
+    <string name="nav_analytics_label">Analytics</string>
+    <string name="nav_analytics_desc">Analytics</string>
+
+
+    <string name="create_habit_title">Create Habit</string>
+    <string name="edit_habit_title">Edit Habit</string>
+    <string name="back_desc">Back</string>
+    <string name="habit_title_label">Title</string>
+    <string name="habit_title_placeholder">e.g. Morning run</string>
+    <string name="habit_icon_label">Icon</string>
+    <string name="habit_color_label">Color</string>
+    <string name="habit_frequency_label">Frequency</string>
+    <string name="freq_daily">Daily</string>
+    <string name="freq_weekly">Weekly</string>
+    <string name="freq_custom">Custom</string>
+    <string name="day_mon">Mo</string>
+    <string name="day_tue">Tu</string>
+    <string name="day_wed">We</string>
+    <string name="day_thu">Th</string>
+    <string name="day_fri">Fr</string>
+    <string name="day_sat">Sa</string>
+    <string name="day_sun">Su</string>
+    <string name="target_count_label">Target count</string>
+    <string name="save_habit_button">Save Habit</string>
+    <string name="custom_frequency_format">Custom (%1$d days)</string>
+
+    <string name="add_habit_desc">Add Habit</string>
+    <string name="calendar_title">Schedule</string>
+    <string name="today_label">Today</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_missed">Missed</string>
+    <string name="status_waiting">Waiting</string>
+    <string name="stats_title">Statistics</string>
+    <string name="edit_habit_desc">Edit Habit</string>
+    <string name="delete_desc">Delete</string>
+    <string name="favorite_desc">Favorite</string>
+    <string name="habit_frequency_prefix">Frequency: %1$s</string>
+    <string name="dashboard_date_format">EEEE, d MMMM</string>
+
+    <string name="stepper_decrease">Decrease</string>
+    <string name="stepper_increase">Increase</string>
+    <string name="hello_android">Hello %1$s!</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Habit Reminders</string>
+    <string name="notification_channel_description">Channel for habit reminders</string>
+    <string name="notification_default_content">Time for your habit!</string>
+    <string name="notification_title">VibeHabit 🚀</string>
+    <string name="notification_content_prefix">Reminder: %1$s</string>
+    <string name="reminders_enable_label">Enable reminders</string>
+    <string name="reminders_enable_desc">Receive push notifications</string>
+    <string name="reminders_time_label">Time</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Create your vibe</string>
+    <string name="onboarding_desc_1">Build healthy habits with a modern and stylish tracker.</string>
+    <string name="onboarding_title_2">Keep the streak</string>
+    <string name="onboarding_desc_2">Don\'t break the chain! Complete habits daily and set new records.</string>
+    <string name="onboarding_title_3">Always in tune</string>
+    <string name="onboarding_desc_3">Turn on notifications so we can remind you about what\'s important in time.</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_start">Get Started</string>
+    <string name="onboarding_next">Next</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_greeting">Hello, %1$s! 👋</string>
+    <string name="verify_email_title">Verify your Email</string>
+    <string name="verify_email_desc">We\'ve sent an email with a link. Follow it to protect your account.</string>
+    <string name="sending_label">Sending...</string>
+    <string name="email_sent_success">✉️ New email successfully sent!</string>
+    <string name="resend_cooldown">Wait %1$d s</string>
+    <string name="resend_email">Resend</string>
+    <string name="checking_label">Checking...</string>
+    <string name="email_not_verified">Email not verified yet. Check your Spam folder.</string>
+    <string name="i_confirmed">I confirmed</string>
+    <string name="empty_habits_title">Your journey starts here!</string>
+    <string name="empty_habits_desc">Add your first habit and start forming a new vibe.</string>
+    <string name="delete_habit_dialog_title">Delete habit?</string>
+    <string name="delete_habit_dialog_desc">Are you sure you want to permanently delete this habit and all its history? This action cannot be undone.</string>
+
+    <!-- Settings & Profile -->
+    <string name="leave_feedback">Leave feedback</string>
+    <string name="feedback_desc_short">Feedback</string>
+    <string name="sign_out">Sign out</string>
+    <string name="delete_account">Delete account permanently</string>
+    <string name="sign_out_title">Sign out</string>
+    <string name="sign_out_desc">Are you sure you want to sign out? Your habits are safely stored in the cloud and will be waiting for your return.</string>
+    <string name="confirm_sign_out">Yes, sign out</string>
+    <string name="delete_account_warning">💥 Irreversible action!</string>
+    <string name="delete_account_desc">Are you sure you want to delete your account? All your created habits, settings, and streak history in the cloud will be destroyed forever without the possibility of recovery.</string>
+    <string name="confirm_delete_account">Yes, delete forever</string>
+    <string name="error_title">⚠️ Something went wrong</string>
+    <string name="ok_button">Got it</string>
+    <string name="feedback_title">Feedback 💜</string>
+    <string name="feedback_desc">Found a bug or have an idea? Write to us, and we will make the app even better!</string>
+    <string name="feedback_placeholder">Your message...</string>
+    <string name="send_button">Send</string>
+    <string name="feedback_success_msg">Thank you! Your feedback has been successfully sent ✨</string>
+    <string name="success_title">Success</string>
+    <string name="feedback_success_button">Super</string>
+    <string name="cancel_button">Cancel</string>
+
+    <!-- Auth -->
+    <string name="app_name_logo">VibeHabit 🚀</string>
+    <string name="welcome_back">Welcome back!</string>
+    <string name="create_account">Create a new account</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="fill_all_fields_error">Fill all fields</string>
+    <string name="sign_in_button">Sign In</string>
+    <string name="sign_up_button">Sign Up</string>
+    <string name="no_account_link">No account? Create</string>
+    <string name="have_account_link">Already have an account? Sign In</string>
+    <string name="or_separator">OR</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="google_auth_error">Google authorization error</string>
+    <string name="something_went_wrong">Something went wrong: %1$s</string>
+    <string name="reset_password_title">Password recovery 🔐</string>
+    <string name="reset_password_desc">Enter the email your account is registered with, and we will send a link to create a new password.</string>
+    <string name="reset_email_sent">✉️ Email successfully sent! Check your inbox (and Spam folder).</string>
+
+    <!-- Analytics -->
+    <string name="analytics_title">Analytics</string>
+    <string name="stat_total_completed">Total completed</string>
+    <string name="stat_max_streak">Max Streak</string>
+    <string name="streak_format">%1$d 🔥</string>
+    <string name="best_streak_format">👑 %1$d</string>
+    <string name="activity_history">Activity history</string>
+
+    <!-- Profile Ranks -->
+    <string name="rank_label">Rank: %1$s</string>
+    <string name="rank_newbie">Newbie</string>
+    <string name="rank_ranger">Habit Ranger 👑</string>
+    <string name="rank_enthusiast">Vibe Enthusiast 🔥</string>
+    <string name="rank_beginner">Beginner ✨</string>
+    <string name="edit_profile_desc">Edit profile</string>
+    <string name="time_desc">Time</string>
+
+    <!-- Calendar & Details -->
+    <string name="calendar_empty_state">It\'s empty for now, but it\'s easy to fix by adding a new habit! ✨</string>
+    <string name="current_streak">Current streak</string>
+    <string name="best_streak">Best streak</string>
+
+    <!-- ViewModel Strings -->
+    <string name="default_username">User</string>
+    <string name="error_google_sign_in">Google sign-in error</string>
+    <string name="error_user_not_found">User not found in system.</string>
+    <string name="error_reauth_required">🔒 For security, this action requires a fresh login. Please sign out, sign in again, and repeat the deletion.</string>
+    <string name="error_registration">Registration error</string>
+    <string name="error_reload_user">Failed to update status</string>
+    <string name="error_resend_email">Sending error</string>
+    <string name="error_enter_email">Please enter your email</string>
+    <string name="error_reset_password_send">Error sending password reset email</string>
+    <string name="error_sign_in">Sign-in error</string>
+    <string name="error_not_authorized">User not authorized</string>
+    <string name="error_feedback_send">Failed to send feedback. Try again later.</string>
+    <string name="no_email_provided">No email provided</string>
+
+    <!-- Widget -->
+    <string name="widget_login_prompt">Please log in to the app</string>
+    <string name="widget_empty_state">No plans for today!</string>
 </resources>

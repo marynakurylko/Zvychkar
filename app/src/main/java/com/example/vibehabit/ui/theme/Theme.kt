@@ -9,35 +9,40 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = NeonPurple, // Головний акцент
+    background = BackgroundDark, // Глобальний фон
+    surface = SurfaceDark, // Фон для карток (HabitCard)
+    surfaceVariant = SurfaceVariantDark, // Фон для полів вводу
+    onPrimary = TextPrimary, // Текст на акцентних кнопках
+    onBackground = TextPrimary, // Головний текст
+    onSurface = TextPrimary,
+    onSurfaceVariant = TextSecondary // Текст-плейсхолдер
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = NeonPurple,
+    background = BackgroundLight,
+    surface = SurfaceLight,
+    surfaceVariant = Color(0xFFE0E0E0),
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onBackground = Color.Black,
+    onSurface = Color.Black,
+    onSurfaceVariant = Color.DarkGray
 )
 
 @Composable
-fun VibeHabitTheme(
+fun HabitTrackerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // ВАЖЛИВО: Вимикаємо динамічні кольори, щоб система не перебивала наш неон!
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -45,14 +50,24 @@ fun VibeHabitTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
+    // Фарбуємо системний статус-бар (там, де годинник і батарея) під наш глибокий фон
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.background.toArgb()
+            window.navigationBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+        }
+    }
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // Можна буде потім підключити сюди футуристичний шрифт!
         content = content
     )
 }
