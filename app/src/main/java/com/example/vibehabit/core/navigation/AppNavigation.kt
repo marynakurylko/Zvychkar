@@ -9,29 +9,39 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.vibehabit.features.create_habit.CreateHabitScreen
-import com.example.vibehabit.features.dashboard.DashboardScreen
-import com.example.vibehabit.features.settings.SettingsScreen
-import com.example.vibehabit.shared_viewmodels.HabitsViewModel
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import com.example.vibehabit.features.calendar.CalendarScreen
-import com.example.vibehabit.features.habit_details.HabitDetailsScreen
-import androidx.compose.ui.res.stringResource
+import androidx.navigation.toRoute
 import com.example.vibehabit.R
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.vibehabit.features.analytics.AnalyticsScreen
-import com.example.vibehabit.features.onboarding.OnboardingScreen
-import com.example.vibehabit.features.auth.AuthState
 import com.example.vibehabit.core.ui.UiState
+import com.example.vibehabit.features.auth.AuthState
 import com.example.vibehabit.features.auth.SignInScreen
+import com.example.vibehabit.features.onboarding.OnboardingScreen
+import com.example.vibehabit.features.dashboard.DashboardScreen
+import com.example.vibehabit.features.create_habit.CreateHabitScreen
+import com.example.vibehabit.features.calendar.CalendarScreen
+import com.example.vibehabit.features.analytics.AnalyticsScreen
+import com.example.vibehabit.features.settings.SettingsScreen
+import com.example.vibehabit.features.habit_details.HabitDetailsScreen
+import com.example.vibehabit.shared_viewmodels.HabitsViewModel
+import kotlinx.serialization.Serializable
+
+// 1. ВИЗНАЧАЄМО ТИПІЗОВАНІ МАРШРУТИ ЗАМІСТЬ СТРІНГОВИХ КОНСТАНТ
+@Serializable object SignInRoute
+@Serializable object OnboardingRoute
+@Serializable object DashboardRoute
+@Serializable object CreateHabitRoute
+@Serializable object CalendarRoute
+@Serializable object AnalyticsRoute
+@Serializable object SettingsRoute
+@Serializable data class EditHabitRoute(val habitId: Int)
+@Serializable data class HabitDetailsRoute(val habitId: Int)
 
 @Composable
 fun AppNavigation(
@@ -42,32 +52,35 @@ fun AppNavigation(
     val viewModel: HabitsViewModel = hiltViewModel()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val destination = navBackStackEntry?.destination
 
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (authState is AuthState.Unauthenticated && currentRoute != "signin") {
-            navController.navigate("signin") {
-                popUpTo(0)
+        if (authState is AuthState.Unauthenticated && destination?.hasRoute<SignInRoute>() == false) {
+            navController.navigate(SignInRoute) {
+                popUpTo(navController.graph.id) { inclusive = true }
             }
         }
     }
 
     if (isOnboardingCompleted == null) return
-    val startDestination = when {
-        authState is AuthState.Unauthenticated -> "signin"
-        isOnboardingCompleted == false -> "onboarding"
-        else -> "dashboard"
+
+    val startDestination: Any = when {
+        authState is AuthState.Unauthenticated -> SignInRoute
+        isOnboardingCompleted == false -> OnboardingRoute
+        else -> DashboardRoute
     }
+
+    // Перевіряємо за допомогою Type Safety, чи треба показувати BottomBar
+    val showBottomBar = destination?.run {
+        hasRoute<DashboardRoute>() || hasRoute<CalendarRoute>() || hasRoute<AnalyticsRoute>() || hasRoute<SettingsRoute>()
+    } ?: false
 
     Scaffold(
         bottomBar = {
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStackEntry?.destination?.route
-
-            if (currentRoute != "onboarding" && currentRoute in listOf("dashboard", "calendar", "analytics", "settings")) {
+            if (showBottomBar && destination != null) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 8.dp
@@ -75,10 +88,12 @@ fun AppNavigation(
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.Home, contentDescription = stringResource(R.string.nav_home_desc)) },
                         label = { Text(stringResource(R.string.nav_habits_label)) },
-                        selected = currentRoute == "dashboard",
+                        selected = destination.hasRoute<DashboardRoute>(),
                         onClick = {
-                            if (currentRoute != "dashboard") {
-                                navController.navigate("dashboard") { popUpTo("dashboard") { inclusive = true } }
+                            if (!destination.hasRoute<DashboardRoute>()) {
+                                navController.navigate(DashboardRoute) {
+                                    popUpTo(navController.graph.id) { inclusive = true }
+                                }
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
@@ -90,9 +105,9 @@ fun AppNavigation(
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.nav_calendar_desc)) },
                         label = { Text(stringResource(R.string.nav_calendar_label)) },
-                        selected = currentRoute == "calendar",
+                        selected = destination.hasRoute<CalendarRoute>(),
                         onClick = {
-                            if (currentRoute != "calendar") navController.navigate("calendar")
+                            if (!destination.hasRoute<CalendarRoute>()) navController.navigate(CalendarRoute)
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -103,9 +118,9 @@ fun AppNavigation(
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.PieChart, contentDescription = stringResource(R.string.nav_analytics_desc)) },
                         label = { Text(stringResource(R.string.nav_analytics_label)) },
-                        selected = currentRoute == "analytics",
+                        selected = destination.hasRoute<AnalyticsRoute>(),
                         onClick = {
-                            if (currentRoute != "analytics") navController.navigate("analytics")
+                            if (!destination.hasRoute<AnalyticsRoute>()) navController.navigate(AnalyticsRoute)
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -116,9 +131,9 @@ fun AppNavigation(
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.nav_settings_desc)) },
                         label = { Text(stringResource(R.string.nav_settings_label)) },
-                        selected = currentRoute == "settings",
+                        selected = destination.hasRoute<SettingsRoute>(),
                         onClick = {
-                            if (currentRoute != "settings") navController.navigate("settings")
+                            if (!destination.hasRoute<SettingsRoute>()) navController.navigate(SettingsRoute)
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -134,58 +149,58 @@ fun AppNavigation(
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("signin") {
+            composable<SignInRoute> {
                 SignInScreen(viewModel = viewModel)
 
                 LaunchedEffect(authState) {
                     if (authState is AuthState.Authenticated) {
-                        val destination = if (isOnboardingCompleted == true) "dashboard" else "onboarding"
-                        navController.navigate(destination) {
-                            popUpTo("signin") { inclusive = true }
+                        val dest = if (isOnboardingCompleted == true) DashboardRoute else OnboardingRoute
+                        navController.navigate(dest) {
+                            popUpTo(SignInRoute) { inclusive = true }
                         }
                     }
                 }
             }
-            composable("onboarding") {
+
+            composable<OnboardingRoute> {
                 OnboardingScreen(
                     onFinish = {
-                        // Відмічаємо в базі, що онбординг пройдено
                         viewModel.completeOnboarding()
-                        // Переходимо на дашборд і чистимо історію, щоб не можна було повернутися назад
-                        navController.navigate("dashboard") {
-                            popUpTo("onboarding") { inclusive = true }
+                        navController.navigate(DashboardRoute) {
+                            popUpTo(OnboardingRoute) { inclusive = true }
                         }
                     }
                 )
             }
 
-            composable("dashboard") {
+            composable<DashboardRoute> {
                 DashboardScreen(
                     viewModel = viewModel,
-                    onAddHabitClick = { navController.navigate("create_habit") },
-                    onHabitClick = { habitId -> navController.navigate("habit_details/$habitId") }
+                    onAddHabitClick = { navController.navigate(CreateHabitRoute) },
+                    onHabitClick = { habitId -> navController.navigate(HabitDetailsRoute(habitId)) }
                 )
             }
 
-            composable("create_habit") {
+            composable<CreateHabitRoute> {
                 CreateHabitScreen(
                     habitToEdit = null,
                     onBackClick = { navController.popBackStack() },
                     onSaveClick = { name, colorHex, iconName, frequency, targetDays, finalReminderTime ->
                         viewModel.addHabit(name, colorHex, iconName, targetDays, frequency, finalReminderTime)
-                    }
+                    },
+                    viewModel = viewModel
                 )
             }
 
-            composable("calendar") {
+            composable<CalendarRoute> {
                 CalendarScreen(viewModel = viewModel)
             }
 
-            composable("analytics") {
+            composable<AnalyticsRoute> {
                 AnalyticsScreen(viewModel = viewModel)
             }
 
-            composable("settings") {
+            composable<SettingsRoute> {
                 SettingsScreen(
                     isDarkTheme = isDarkTheme,
                     onThemeChange = onThemeChange,
@@ -193,16 +208,12 @@ fun AppNavigation(
                 )
             }
 
-            composable(
-                route = "edit_habit/{habitId}",
-                arguments = listOf(navArgument("habitId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val habitId = backStackEntry.arguments?.getInt("habitId") ?: return@composable
+            composable<EditHabitRoute> { backStackEntry ->
+                val args = backStackEntry.toRoute<EditHabitRoute>()
 
-                // ПРАВИЛЬНЕ ОТРИМАННЯ ЗВИЧОК ЧЕРЕЗ UISTATE
                 val habitsState by viewModel.habitsState.collectAsState()
                 val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
-                val habit = habits.find { it.id == habitId }
+                val habit = habits.find { it.id == args.habitId }
 
                 if (habit != null) {
                     CreateHabitScreen(
@@ -210,22 +221,20 @@ fun AppNavigation(
                         onBackClick = { navController.popBackStack() },
                         onSaveClick = { name, colorHex, iconName, frequency, targetDays, finalReminderTime ->
                             viewModel.updateHabit(habit.id, name, colorHex, iconName, targetDays, frequency, finalReminderTime)
-                        }
+                        },
+                        viewModel = viewModel
                     )
                 }
             }
 
-            composable(
-                route = "habit_details/{habitId}",
-                arguments = listOf(navArgument("habitId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val habitId = backStackEntry.arguments?.getInt("habitId") ?: return@composable
+            composable<HabitDetailsRoute> { backStackEntry ->
+                val args = backStackEntry.toRoute<HabitDetailsRoute>()
 
                 HabitDetailsScreen(
-                    habitId = habitId,
+                    habitId = args.habitId,
                     viewModel = viewModel,
                     onBackClick = { navController.popBackStack() },
-                    onEditClick = { navController.navigate("edit_habit/$habitId") }
+                    onEditClick = { navController.navigate(EditHabitRoute(args.habitId)) }
                 )
             }
         }
