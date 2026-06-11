@@ -44,11 +44,11 @@
         </activity>
 
         <receiver
-            android:name=".notifications.HabitAlarmReceiver"
+            android:name=".core.notifications.HabitAlarmReceiver"
             android:exported="false" />
 
         <receiver
-            android:name=".widget.HabitWidgetReceiver"
+            android:name=".core.widget.HabitWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
