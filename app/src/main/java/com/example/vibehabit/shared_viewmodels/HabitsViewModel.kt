@@ -33,7 +33,7 @@ class HabitsViewModel @Inject constructor(
     application: Application,
     private val authRepository: AuthRepository,
     private val habitRepository: HabitRepository,
-    private val saveHabitUseCase: SaveHabitUseCase,
+    // ВИДАЛЕНО: private val saveHabitUseCase: SaveHabitUseCase
     private val userPreferencesRepository: UserPreferencesRepository
 ) : AndroidViewModel(application) {
     private val _isOnboardingCompleted = MutableStateFlow<Boolean?>(null)
@@ -58,12 +58,10 @@ class HabitsViewModel @Inject constructor(
     private val _isEmailVerified = MutableStateFlow(true)
     val isEmailVerified: StateFlow<Boolean> = _isEmailVerified.asStateFlow()
 
-    // НОВИЙ КАНАЛ ДЛЯ ПОМИЛОК ТА ПОДІЙ
     private val _uiEvent = MutableSharedFlow<String>()
     val uiEvent: SharedFlow<String> = _uiEvent.asSharedFlow()
 
     private var habitsJob: Job? = null
-
 
     init {
         viewModelScope.launch {
@@ -102,12 +100,11 @@ class HabitsViewModel @Inject constructor(
 
     private fun listenToHabits(userId: String) {
         habitsJob?.cancel()
-        _habitsState.value = UiState.Loading // Показуємо крутилку перед завантаженням
+        _habitsState.value = UiState.Loading
 
         habitsJob = viewModelScope.launch {
             habitRepository.getHabitsFlow(userId)
                 .catch { exception ->
-                    // Якщо Firebase падає, відправляємо стан помилки
                     _habitsState.value = UiState.Error(
                         exception.localizedMessage ?: "Не вдалося завантажити звички"
                     )
@@ -159,59 +156,6 @@ class HabitsViewModel @Inject constructor(
 
         viewModelScope.launch {
             habitRepository.updateHabitFavorite(userId, habitId, !habit.isFavorite)
-        }
-    }
-
-    fun addHabit(name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
-        val userId = authRepository.currentUser?.uid ?: return
-        val newId = (currentHabits.maxOfOrNull { it.id } ?: 0) + 1
-        val newHabit = Habit(
-            id = newId, name = name, isFavorite = false, colorHex = colorHex,
-            completedDates = emptyList(), iconName = iconName, targetDays = targetDays,
-            frequency = frequency, reminderTime = reminderTime
-        )
-
-        viewModelScope.launch {
-            saveHabitUseCase(
-                userId = userId,
-                habitId = newId,
-                name = name,
-                colorHex = colorHex,
-                iconName = iconName,
-                targetDays = targetDays,
-                frequency = frequency,
-                reminderTime = reminderTime
-            ).onSuccess {
-                handleReminder(newId, name, reminderTime)
-                _uiEvent.emit("SUCCESS")
-            }.onFailure { error ->
-                _uiEvent.emit(error.localizedMessage ?: "Помилка збереження звички")
-            }
-        }
-    }
-
-    fun updateHabit(id: Int, name: String, colorHex: String, iconName: String, targetDays: Int, frequency: String, reminderTime: String?) {
-        val userId = authRepository.currentUser?.uid ?: return
-        val currentHabit = currentHabits.find { it.id == id }
-
-        viewModelScope.launch {
-            saveHabitUseCase(
-                userId = userId,
-                habitId = id,
-                name = name,
-                colorHex = colorHex,
-                iconName = iconName,
-                targetDays = targetDays,
-                frequency = frequency,
-                reminderTime = reminderTime,
-                isFavorite = currentHabit?.isFavorite ?: false,
-                completedDates = currentHabit?.completedDates ?: emptyList()
-            ).onSuccess {
-                handleReminder(id, name, reminderTime)
-                _uiEvent.emit("SUCCESS")
-            }.onFailure { error ->
-                _uiEvent.emit(error.localizedMessage ?: "Помилка оновлення звички")
-            }
         }
     }
 
@@ -327,20 +271,6 @@ class HabitsViewModel @Inject constructor(
                 .onSuccess { onSuccess() }
                 .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(
                     R.string.error_feedback_send)) }
-        }
-    }
-
-    private fun handleReminder(habitId: Int, habitName: String, reminderTime: String?) {
-        val context = getApplication<Application>()
-        if (reminderTime != null) {
-            val parts = reminderTime.split(":")
-            if (parts.size == 2) {
-                val hour = parts[0].toIntOrNull() ?: 9
-                val minute = parts[1].toIntOrNull() ?: 0
-                NotificationHelper.scheduleHabitReminder(context, habitId, habitName, hour, minute)
-            }
-        } else {
-            NotificationHelper.cancelHabitReminder(context, habitId)
         }
     }
 }

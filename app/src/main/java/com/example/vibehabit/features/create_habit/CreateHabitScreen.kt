@@ -40,14 +40,11 @@ import com.example.vibehabit.shared_viewmodels.HabitsViewModel
 fun CreateHabitScreen(
     habitToEdit: Habit? = null,
     onBackClick: () -> Unit,
-    onSaveClick: (name: String, colorHex: String, iconName: String, frequency: String, targetDays: Int, reminderTime: String?) -> Unit,
-    viewModel: HabitsViewModel = hiltViewModel(),
-    formViewModel: CreateHabitViewModel = hiltViewModel() // ПІДКЛЮЧАЄМО НОВУ VIEWMODEL
+    // ЗВЕРНИ УВАГУ: Ми прибрали onSaveClick та HabitsViewModel!
+    formViewModel: CreateHabitViewModel = hiltViewModel()
 ) {
-    // ПІДПИСУЄМОСЬ НА ЄДИНИЙ СТАН
     val uiState by formViewModel.uiState.collectAsState()
 
-    // Ініціалізація даних при відкритті (відпрацює лише раз)
     LaunchedEffect(habitToEdit) {
         formViewModel.initData(habitToEdit)
     }
@@ -62,7 +59,6 @@ fun CreateHabitScreen(
         stringResource(R.string.freq_custom)
     )
 
-    // Обчислюємо індекси динамічно зі State
     val selectedIconIndex = iconNames.indexOf(uiState.iconName).coerceAtLeast(0)
     val selectedFrequencyIndex = frequencies.indexOf(uiState.frequencyType).coerceAtLeast(0)
 
@@ -71,7 +67,6 @@ fun CreateHabitScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Функція показу пікера часу (не навантажує UI під час рендеру)
     fun showTimePicker() {
         val parts = uiState.reminderTime.split(":")
         val h = parts.getOrNull(0)?.toIntOrNull() ?: 9
@@ -82,7 +77,8 @@ fun CreateHabitScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { message ->
+        // ТЕПЕР СЛУХАЄМО ПОДІЇ ТІЛЬКИ ВІД FORM VIEWMODEL
+        formViewModel.uiEvent.collect { message ->
             formViewModel.onEvent(CreateHabitEvent.SetSaving(false))
             if (message == "SUCCESS") {
                 onBackClick()
@@ -90,6 +86,29 @@ fun CreateHabitScreen(
                 snackbarHostState.showSnackbar(message)
             }
         }
+    }
+
+    // --- ОПТИМІЗАЦІЯ ЛЯМБД ---
+    val onNameChanged: (String) -> Unit = remember(formViewModel) {
+        { formViewModel.onEvent(CreateHabitEvent.NameChanged(it)) }
+    }
+    val onIconSelected: (Int) -> Unit = remember(formViewModel, iconNames) {
+        { index -> formViewModel.onEvent(CreateHabitEvent.IconChanged(iconNames[index])) }
+    }
+    val onColorSelected: (String) -> Unit = remember(formViewModel) {
+        { color -> formViewModel.onEvent(CreateHabitEvent.ColorChanged(color)) }
+    }
+    val onFrequencySelected: (Int) -> Unit = remember(formViewModel, frequencies) {
+        { index -> formViewModel.onEvent(CreateHabitEvent.FrequencyChanged(frequencies[index])) }
+    }
+    val onCustomDayToggled: (Int) -> Unit = remember(formViewModel) {
+        { day -> formViewModel.onEvent(CreateHabitEvent.CustomDayToggled(day)) }
+    }
+    val onTargetDaysChanged: (Int) -> Unit = remember(formViewModel) {
+        { days -> formViewModel.onEvent(CreateHabitEvent.TargetDaysChanged(days)) }
+    }
+    val onReminderToggled: (Boolean) -> Unit = remember(formViewModel) {
+        { enabled -> formViewModel.onEvent(CreateHabitEvent.ReminderToggled(enabled)) }
     }
 
     Scaffold(
@@ -110,8 +129,8 @@ fun CreateHabitScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.habit_title_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 TextField(
-                    value = uiState.name, // БЕРЕМО З STATE
-                    onValueChange = { formViewModel.onEvent(CreateHabitEvent.NameChanged(it)) }, // ВІДПРАВЛЯЄМО ІВЕНТ
+                    value = uiState.name,
+                    onValueChange = onNameChanged,
                     placeholder = { Text(stringResource(R.string.habit_title_placeholder), color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                     colors = TextFieldDefaults.colors(focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
@@ -121,17 +140,17 @@ fun CreateHabitScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.habit_icon_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
-                IconSelector(icons = icons, selectedIndex = selectedIconIndex, onIconSelected = { formViewModel.onEvent(CreateHabitEvent.IconChanged(iconNames[it])) })
+                IconSelector(icons = icons, selectedIndex = selectedIconIndex, onIconSelected = onIconSelected)
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.habit_color_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
-                ColorSelector(colors = neonColors, selectedColorHex = uiState.colorHex, onColorSelected = { formViewModel.onEvent(CreateHabitEvent.ColorChanged(it)) })
+                ColorSelector(colors = neonColors, selectedColorHex = uiState.colorHex, onColorSelected = onColorSelected)
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.habit_frequency_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
-                SegmentedControl(items = frequencyLabels, selectedIndex = selectedFrequencyIndex, onItemSelection = { formViewModel.onEvent(CreateHabitEvent.FrequencyChanged(frequencies[it])) })
+                SegmentedControl(items = frequencyLabels, selectedIndex = selectedFrequencyIndex, onItemSelection = onFrequencySelected)
 
                 AnimatedVisibility(visible = uiState.frequencyType == "Custom", enter = expandVertically(), exit = shrinkVertically()) {
                     Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -144,7 +163,7 @@ fun CreateHabitScreen(
                             val isSelected = uiState.customDays.contains(dayNumber)
                             Box(
                                 modifier = Modifier.size(40.dp).clip(CircleShape).background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable { formViewModel.onEvent(CreateHabitEvent.CustomDayToggled(dayNumber)) },
+                                    .clickable { onCustomDayToggled(dayNumber) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(day, color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -156,7 +175,7 @@ fun CreateHabitScreen(
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.target_count_label), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
-                NumberStepper(value = uiState.targetDays, onValueChange = { formViewModel.onEvent(CreateHabitEvent.TargetDaysChanged(it)) })
+                NumberStepper(value = uiState.targetDays, onValueChange = onTargetDaysChanged)
             }
 
             Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -165,7 +184,7 @@ fun CreateHabitScreen(
                         Text(stringResource(R.string.reminders_enable_label), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                         Text(stringResource(R.string.reminders_enable_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(checked = uiState.isReminderEnabled, onCheckedChange = { formViewModel.onEvent(CreateHabitEvent.ReminderToggled(it)) }, colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary))
+                    Switch(checked = uiState.isReminderEnabled, onCheckedChange = onReminderToggled, colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary))
                 }
 
                 AnimatedVisibility(visible = uiState.isReminderEnabled, enter = expandVertically(), exit = shrinkVertically()) {
@@ -186,13 +205,8 @@ fun CreateHabitScreen(
             Button(
                 onClick = {
                     if (uiState.name.isNotBlank() && !uiState.isSaving) {
-                        formViewModel.onEvent(CreateHabitEvent.SetSaving(true))
-                        val frequencyLabel = if (uiState.frequencyType == "Custom") {
-                            context.getString(R.string.custom_frequency_format, uiState.customDays.size)
-                        } else uiState.frequencyType
-                        val finalReminderTime = if (uiState.isReminderEnabled) uiState.reminderTime else null
-
-                        onSaveClick(uiState.name, uiState.colorHex, uiState.iconName, frequencyLabel, uiState.targetDays, finalReminderTime)
+                        // ТЕПЕР ФОРМА САМА ВИКЛИКАЄ ЗБЕРЕЖЕННЯ!
+                        formViewModel.saveHabit()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(64.dp), shape = RoundedCornerShape(20.dp),
@@ -213,6 +227,6 @@ fun CreateHabitScreen(
 @Composable
 fun CreateHabitScreenPreview() {
     HabitTrackerTheme {
-        CreateHabitScreen(onBackClick = {}, onSaveClick = { _, _, _, _, _, _ -> })
+        CreateHabitScreen(onBackClick = {})
     }
 }

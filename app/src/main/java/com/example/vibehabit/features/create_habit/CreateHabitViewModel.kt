@@ -1,15 +1,26 @@
 package com.example.vibehabit.features.create_habit
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.vibehabit.R
 import com.example.vibehabit.core.models.Habit
+import com.example.vibehabit.core.notifications.NotificationHelper
+import com.example.vibehabit.features.auth.AuthRepository
+import com.example.vibehabit.shared_viewmodels.HabitRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// 1. ЄДИНИЙ СТАН ЕКРАНА (UI State)
 data class CreateHabitUiState(
     val name: String = "",
     val colorHex: String = "#9D4EDD",
@@ -22,7 +33,6 @@ data class CreateHabitUiState(
     val isSaving: Boolean = false
 )
 
-// 2. УСІ МОЖЛИВІ ДІЇ ЮЗЕРА (Events)
 sealed class CreateHabitEvent {
     data class NameChanged(val name: String) : CreateHabitEvent()
     data class ColorChanged(val colorHex: String) : CreateHabitEvent()
@@ -35,20 +45,34 @@ sealed class CreateHabitEvent {
     data class SetSaving(val isSaving: Boolean) : CreateHabitEvent()
 }
 
-// 3. САМА VIEWMODEL
 @HiltViewModel
-class CreateHabitViewModel @Inject constructor() : ViewModel() {
+class CreateHabitViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val authRepository: AuthRepository,
+    private val habitRepository: HabitRepository,
+    private val saveHabitUseCase: SaveHabitUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateHabitUiState())
     val uiState: StateFlow<CreateHabitUiState> = _uiState.asStateFlow()
 
+    private val _uiEvent = MutableSharedFlow<String>()
+    val uiEvent: SharedFlow<String> = _uiEvent.asSharedFlow()
+
     private var isInitialized = false
+    private var currentHabitId: Int? = null
+    private var currentIsFavorite = false
+    private var currentCompletedDates = emptyList<String>()
 
     fun initData(habit: Habit?) {
         if (isInitialized) return
         isInitialized = true
 
         if (habit != null) {
+            currentHabitId = habit.id
+            currentIsFavorite = habit.isFavorite
+            currentCompletedDates = habit.completedDates
+
             val isCustom = habit.frequency.startsWith("Custom")
             _uiState.update {
                 it.copy(
@@ -78,6 +102,63 @@ class CreateHabitViewModel @Inject constructor() : ViewModel() {
             is CreateHabitEvent.ReminderToggled -> _uiState.update { it.copy(isReminderEnabled = event.enabled) }
             is CreateHabitEvent.ReminderTimeChanged -> _uiState.update { it.copy(reminderTime = event.time) }
             is CreateHabitEvent.SetSaving -> _uiState.update { it.copy(isSaving = event.isSaving) }
+        }
+    }
+
+    fun saveHabit() {
+        val state = _uiState.value
+        val userId = authRepository.currentUser?.uid
+        if (userId == null) {
+            viewModelScope.launch { _uiEvent.emit(context.getString(R.string.error_not_authorized)) }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
+
+            val frequencyLabel = if (state.frequencyType == "Custom") {
+                context.getString(R.string.custom_frequency_format, state.customDays.size)
+            } else state.frequencyType
+
+            val finalReminderTime = if (state.isReminderEnabled) state.reminderTime else null
+
+            // Якщо це нова звичка - генеруємо ID
+            val habitId = currentHabitId ?: run {
+                val currentHabits = habitRepository.getHabitsFlow(userId).first()
+                (currentHabits.maxOfOrNull { it.id } ?: 0) + 1
+            }
+
+            saveHabitUseCase(
+                userId = userId,
+                habitId = habitId,
+                name = state.name,
+                colorHex = state.colorHex,
+                iconName = state.iconName,
+                targetDays = state.targetDays,
+                frequency = frequencyLabel,
+                reminderTime = finalReminderTime,
+                isFavorite = currentIsFavorite,
+                completedDates = currentCompletedDates
+            ).onSuccess {
+                handleReminder(habitId, state.name, finalReminderTime)
+                _uiEvent.emit("SUCCESS")
+            }.onFailure { error ->
+                _uiState.update { it.copy(isSaving = false) }
+                _uiEvent.emit(error.localizedMessage ?: "Помилка збереження")
+            }
+        }
+    }
+
+    private fun handleReminder(habitId: Int, habitName: String, reminderTime: String?) {
+        if (reminderTime != null) {
+            val parts = reminderTime.split(":")
+            if (parts.size == 2) {
+                val hour = parts[0].toIntOrNull() ?: 9
+                val minute = parts[1].toIntOrNull() ?: 0
+                NotificationHelper.scheduleHabitReminder(context, habitId, habitName, hour, minute)
+            }
+        } else {
+            NotificationHelper.cancelHabitReminder(context, habitId)
         }
     }
 }

@@ -184,11 +184,7 @@ fun AppNavigation(
             composable<CreateHabitRoute> {
                 CreateHabitScreen(
                     habitToEdit = null,
-                    onBackClick = { navController.popBackStack() },
-                    onSaveClick = { name, colorHex, iconName, frequency, targetDays, finalReminderTime ->
-                        viewModel.addHabit(name, colorHex, iconName, targetDays, frequency, finalReminderTime)
-                    },
-                    viewModel = viewModel
+                    onBackClick = { navController.popBackStack() }
                 )
             }
 
@@ -218,11 +214,7 @@ fun AppNavigation(
                 if (habit != null) {
                     CreateHabitScreen(
                         habitToEdit = habit,
-                        onBackClick = { navController.popBackStack() },
-                        onSaveClick = { name, colorHex, iconName, frequency, targetDays, finalReminderTime ->
-                            viewModel.updateHabit(habit.id, name, colorHex, iconName, targetDays, frequency, finalReminderTime)
-                        },
-                        viewModel = viewModel
+                        onBackClick = { navController.popBackStack() }
                     )
                 }
             }
