@@ -27,12 +27,12 @@ import com.example.vibehabit.features.dashboard.DashboardScreen
 import com.example.vibehabit.features.create_habit.CreateHabitScreen
 import com.example.vibehabit.features.calendar.CalendarScreen
 import com.example.vibehabit.features.analytics.AnalyticsScreen
+import com.example.vibehabit.features.auth.AuthViewModel
 import com.example.vibehabit.features.settings.SettingsScreen
 import com.example.vibehabit.features.habit_details.HabitDetailsScreen
 import com.example.vibehabit.shared_viewmodels.HabitsViewModel
 import kotlinx.serialization.Serializable
 
-// 1. ВИЗНАЧАЄМО ТИПІЗОВАНІ МАРШРУТИ ЗАМІСТЬ СТРІНГОВИХ КОНСТАНТ
 @Serializable object SignInRoute
 @Serializable object OnboardingRoute
 @Serializable object DashboardRoute
@@ -50,12 +50,13 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     val viewModel: HabitsViewModel = hiltViewModel()
+    val authViewModel: AuthViewModel = hiltViewModel()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val destination = navBackStackEntry?.destination
 
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
-    val authState by viewModel.authState.collectAsState()
+    val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Unauthenticated && destination?.hasRoute<SignInRoute>() == false) {
@@ -73,7 +74,6 @@ fun AppNavigation(
         else -> DashboardRoute
     }
 
-    // Перевіряємо за допомогою Type Safety, чи треба показувати BottomBar
     val showBottomBar = destination?.run {
         hasRoute<DashboardRoute>() || hasRoute<CalendarRoute>() || hasRoute<AnalyticsRoute>() || hasRoute<SettingsRoute>()
     } ?: false
@@ -150,7 +150,7 @@ fun AppNavigation(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable<SignInRoute> {
-                SignInScreen(viewModel = viewModel)
+                SignInScreen(viewModel = authViewModel)
 
                 LaunchedEffect(authState) {
                     if (authState is AuthState.Authenticated) {

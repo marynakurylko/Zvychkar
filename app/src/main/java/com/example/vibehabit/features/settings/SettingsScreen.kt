@@ -23,15 +23,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import com.example.vibehabit.features.settings.components.ProfileBlock
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.vibehabit.features.auth.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
-    habitsViewModel: HabitsViewModel = viewModel(),
-    settingsViewModel: SettingsViewModel = viewModel()
-) {
+    habitsViewModel: HabitsViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
+){
     val context = LocalContext.current
     val currentLanguage by settingsViewModel.language.collectAsState(initial = "en")
     val selectedLanguageIndex = if (currentLanguage == "uk") 1 else 0
@@ -146,7 +149,7 @@ fun SettingsScreen(
                 Text(stringResource(R.string.leave_feedback), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
 
-            Spacer(modifier = Modifier.weight(1f)) // Відштовхуємо кнопку виходу в самий низ
+            Spacer(modifier = Modifier.weight(1f))
 
             // Кнопка Sign Out
             Button(
@@ -173,7 +176,6 @@ fun SettingsScreen(
                 )
             }
 
-            // Відображення помилки безпеки (якщо треба перелогінитись)
             if (authErrorMessage != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -200,7 +202,7 @@ fun SettingsScreen(
                     TextButton(
                         onClick = {
                             showLogoutDialog = false
-                            habitsViewModel.signOut() // Розлогінюємо через Firebase
+                            authViewModel.signOut()
                         }
                     ) {
                         Text(stringResource(R.string.confirm_sign_out), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
@@ -230,9 +232,9 @@ fun SettingsScreen(
                         onClick = {
                             showDeleteDialog = false
                             deletionErrorByFirebase = null // Скидаємо попередній стан
-                            habitsViewModel.deleteAccount(
+                            authViewModel.deleteAccount(
                                 onSuccess = {
-                                    habitsViewModel.signOut()
+                                    authViewModel.signOut()
                                 },
                                 onError = { errorText ->
                                     deletionErrorByFirebase = errorText
@@ -312,12 +314,11 @@ fun SettingsScreen(
                                     onSuccess = {
                                         isFeedbackSubmitting = false
                                         showFeedbackDialog = false
-                                        feedbackText = "" // Очищаємо поле
+                                        feedbackText = ""
                                         feedbackSuccessMessage = context.getString(R.string.feedback_success_msg)
                                     },
                                     onError = { error ->
                                         isFeedbackSubmitting = false
-                                        // Можна перевикористати існуючий стейт помилки
                                         deletionErrorByFirebase = error
                                     }
                                 )

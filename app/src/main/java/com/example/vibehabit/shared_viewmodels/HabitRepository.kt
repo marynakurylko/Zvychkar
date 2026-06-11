@@ -16,20 +16,28 @@ class HabitRepository @Inject constructor(
 ) {
     // МАГІЯ 2: Перетворюємо Firestore SnapshotListener на Flow
     fun getHabitsFlow(userId: String): Flow<List<Habit>> = callbackFlow {
-        val listener = firestore.collection("users").document(userId).collection("habits")
-            .addSnapshotListener { snapshot, error ->
+        // 1. Екстра-захист від порожнього userId
+        if (userId.isBlank()) {
+            close(Exception("Користувач не авторизований"))
+            return@callbackFlow
+        }
+
+        val subscription = firestore.collection("users")
+            .document(userId)
+            .collection("habits")
+            .addSnapshotListener(com.google.firebase.firestore.MetadataChanges.INCLUDE) { snapshot, error ->
                 if (error != null) {
                     close(error)
                     return@addSnapshotListener
                 }
+
                 if (snapshot != null) {
-                    val habitsList =
-                        snapshot.documents.mapNotNull { it.toObject(Habit::class.java) }
-                            .sortedBy { it.id }
-                    trySend(habitsList)
+                    val habits = snapshot.toObjects(Habit::class.java)
+                    trySend(habits)
                 }
             }
-        awaitClose { listener.remove() }
+
+        awaitClose { subscription.remove() }
     }
 
     suspend fun updateHabitDates(userId: String, habitId: Int, newDates: List<String>): Result<Unit> = runCatching {

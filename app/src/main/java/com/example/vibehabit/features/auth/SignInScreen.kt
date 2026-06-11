@@ -30,10 +30,11 @@ import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignInScreen(viewModel: HabitsViewModel) {
+fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
     var isLoginMode by remember { mutableStateOf(true) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

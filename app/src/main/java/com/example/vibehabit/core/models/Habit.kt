@@ -1,6 +1,7 @@
 package com.example.vibehabit.core.models
 
 import androidx.compose.runtime.Immutable
+import com.google.firebase.firestore.Exclude
 import java.time.LocalDate
 
 @Immutable
@@ -9,15 +10,17 @@ data class Habit(
     val name: String = "",
     val isFavorite: Boolean = false,
     val colorHex: String = "",
-    val completedDates: List<String> = emptyList(), // Переведено в List для Firestore
+    val completedDates: List<String> = emptyList(),
     val targetDays: Int = 7,
     val iconName: String = "Bolt",
     val frequency: String = "Daily",
     val reminderTime: String? = null
 ) {
-    val currentStreak: Int
-        get() {
-            if (completedDates.isEmpty()) return 0
+    @get:Exclude
+    val currentStreak: Int by lazy {
+        if (completedDates.isEmpty()) {
+            0
+        } else {
             val dates = completedDates.map { LocalDate.parse(it) }.sortedDescending()
             var streak = 0
             var currentDate = LocalDate.now()
@@ -27,24 +30,29 @@ data class Habit(
             } else if (dates.contains(currentDate.minusDays(1))) {
                 streak = 1
                 currentDate = currentDate.minusDays(1)
+            }
+
+            if (streak == 0) {
+                0
             } else {
-                return 0
-            }
-
-            for (i in 1 until dates.size) {
-                currentDate = currentDate.minusDays(1)
-                if (dates.contains(currentDate)) {
-                    streak++
-                } else {
-                    break
+                for (i in 1 until dates.size) {
+                    currentDate = currentDate.minusDays(1)
+                    if (dates.contains(currentDate)) {
+                        streak++
+                    } else {
+                        break
+                    }
                 }
+                streak
             }
-            return streak
         }
+    }
 
-    val bestStreak: Int
-        get() {
-            if (completedDates.isEmpty()) return 0
+    @get:Exclude
+    val bestStreak: Int by lazy {
+        if (completedDates.isEmpty()) {
+            0
+        } else {
             val dates = completedDates.map { LocalDate.parse(it) }.sorted()
             var maxStreak = 1
             var tempStreak = 1
@@ -60,6 +68,7 @@ data class Habit(
                     tempStreak = 1
                 }
             }
-            return maxStreak
+            maxStreak
         }
+    }
 }

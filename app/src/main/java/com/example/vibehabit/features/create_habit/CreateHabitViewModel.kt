@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.example.vibehabit.core.ui.UiEvent
 
 data class CreateHabitUiState(
     val name: String = "",
@@ -56,8 +57,8 @@ class CreateHabitViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CreateHabitUiState())
     val uiState: StateFlow<CreateHabitUiState> = _uiState.asStateFlow()
 
-    private val _uiEvent = MutableSharedFlow<String>()
-    val uiEvent: SharedFlow<String> = _uiEvent.asSharedFlow()
+    private val _uiEvent = MutableSharedFlow<UiEvent>()
+    val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
     private var isInitialized = false
     private var currentHabitId: Int? = null
@@ -109,7 +110,7 @@ class CreateHabitViewModel @Inject constructor(
         val state = _uiState.value
         val userId = authRepository.currentUser?.uid
         if (userId == null) {
-            viewModelScope.launch { _uiEvent.emit(context.getString(R.string.error_not_authorized)) }
+            viewModelScope.launch { _uiEvent.emit(UiEvent.Error(R.string.error_not_authorized)) }
             return
         }
 
@@ -122,7 +123,6 @@ class CreateHabitViewModel @Inject constructor(
 
             val finalReminderTime = if (state.isReminderEnabled) state.reminderTime else null
 
-            // Якщо це нова звичка - генеруємо ID
             val habitId = currentHabitId ?: run {
                 val currentHabits = habitRepository.getHabitsFlow(userId).first()
                 (currentHabits.maxOfOrNull { it.id } ?: 0) + 1
@@ -141,10 +141,10 @@ class CreateHabitViewModel @Inject constructor(
                 completedDates = currentCompletedDates
             ).onSuccess {
                 handleReminder(habitId, state.name, finalReminderTime)
-                _uiEvent.emit("SUCCESS")
+                _uiEvent.emit(UiEvent.Success)
             }.onFailure { error ->
                 _uiState.update { it.copy(isSaving = false) }
-                _uiEvent.emit(error.localizedMessage ?: "Помилка збереження")
+                _uiEvent.emit(UiEvent.ErrorText(error.localizedMessage ?: "Error"))
             }
         }
     }

@@ -33,9 +33,9 @@ class HabitsViewModel @Inject constructor(
     application: Application,
     private val authRepository: AuthRepository,
     private val habitRepository: HabitRepository,
-    // ВИДАЛЕНО: private val saveHabitUseCase: SaveHabitUseCase
     private val userPreferencesRepository: UserPreferencesRepository
 ) : AndroidViewModel(application) {
+
     private val _isOnboardingCompleted = MutableStateFlow<Boolean?>(null)
     val isOnboardingCompleted: StateFlow<Boolean?> = _isOnboardingCompleted.asStateFlow()
 
@@ -52,15 +52,6 @@ class HabitsViewModel @Inject constructor(
     private val _heatmapStats = MutableStateFlow<Map<LocalDate, Int>>(emptyMap())
     val heatmapStats: StateFlow<Map<LocalDate, Int>> = _heatmapStats.asStateFlow()
 
-    private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
-    val authState: StateFlow<AuthState> = _authState.asStateFlow()
-
-    private val _isEmailVerified = MutableStateFlow(true)
-    val isEmailVerified: StateFlow<Boolean> = _isEmailVerified.asStateFlow()
-
-    private val _uiEvent = MutableSharedFlow<String>()
-    val uiEvent: SharedFlow<String> = _uiEvent.asSharedFlow()
-
     private var habitsJob: Job? = null
 
     init {
@@ -74,22 +65,19 @@ class HabitsViewModel @Inject constructor(
                 _username.value = name ?: defaultUser
             }
         }
-        observeAuthState()
+        observeUserForData()
     }
 
-    private fun observeAuthState() {
+    // Пасивно слухаємо, чи зайшов юзер, щоб підтягнути його звички
+    private fun observeUserForData() {
         viewModelScope.launch {
             authRepository.getAuthStateFlow().collect { user ->
                 if (user != null) {
-                    _authState.value = AuthState.Authenticated(user)
-                    _isEmailVerified.value = user.isEmailVerified
                     listenToHabits(user.uid)
-
                     if (_username.value == defaultUser && user.email != null) {
                         updateUsername(user.email!!.substringBefore("@"))
                     }
                 } else {
-                    _authState.value = AuthState.Unauthenticated
                     habitsJob?.cancel()
                     _habitsState.value = UiState.Success(emptyList())
                     _heatmapStats.value = emptyMap()
@@ -167,97 +155,6 @@ class HabitsViewModel @Inject constructor(
         }
     }
 
-    // --- AUTH МЕТОДИ ---
-
-    fun signInWithGoogle(idToken: String, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            authRepository.signInWithGoogle(idToken).onFailure { e ->
-                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_google_sign_in))
-            }
-        }
-    }
-
-    fun signUpWithEmail(email: String, pass: String, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            authRepository.signUpWithEmail(email, pass).onFailure { e ->
-                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_registration))
-            }
-        }
-    }
-
-    fun signInWithEmail(email: String, pass: String, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            authRepository.signInWithEmail(email, pass).onFailure { e ->
-                onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_sign_in))
-            }
-        }
-    }
-
-    fun reloadUser(onResult: (Boolean) -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            authRepository.reloadUser()
-                .onSuccess { isVerified ->
-                    _isEmailVerified.value = isVerified
-                    onResult(isVerified)
-                }
-                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(
-                    R.string.error_reload_user)) }
-        }
-    }
-
-    fun resendVerificationEmail(onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            authRepository.resendVerificationEmail()
-                .onSuccess { onSuccess() }
-                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(
-                    R.string.error_resend_email)) }
-        }
-    }
-
-    fun resetPassword(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        if (email.isBlank()) {
-            onError(getApplication<Application>().getString(R.string.error_enter_email))
-            return
-        }
-        viewModelScope.launch {
-            authRepository.resetPassword(email)
-                .onSuccess { onSuccess() }
-                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(
-                    R.string.error_reset_password_send)) }
-        }
-    }
-
-    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
-        val userId = authRepository.currentUser?.uid
-        if (userId == null) {
-            onError(getApplication<Application>().getString(R.string.error_user_not_found))
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                withContext(NonCancellable) {
-                    habitRepository.deleteAllUserData(userId).getOrThrow()
-                    authRepository.deleteAccount().getOrThrow()
-                }
-                onSuccess()
-            } catch (e: Exception) {
-                val errorMessage = e.message ?: ""
-                if (e is FirebaseAuthRecentLoginRequiredException ||
-                    errorMessage.contains("CREDENTIAL_TOO_OLD_LOGIN_AGAIN") ||
-                    errorMessage.contains("recent login")) {
-                    onError(getApplication<Application>().getString(R.string.error_reauth_required))
-                } else {
-                    onError("${getApplication<Application>().getString(R.string.error_title).substringBefore(" ")}: ${e.localizedMessage}")
-                }
-            }
-        }
-    }
-
-    fun signOut() {
-        authRepository.signOut()
-    }
-
     fun sendFeedback(message: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val user = authRepository.currentUser
         if (user == null) {
@@ -269,8 +166,7 @@ class HabitsViewModel @Inject constructor(
             val email = user.email ?: getApplication<Application>().getString(R.string.no_email_provided)
             habitRepository.sendFeedback(user.uid, email, message)
                 .onSuccess { onSuccess() }
-                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(
-                    R.string.error_feedback_send)) }
+                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_feedback_send)) }
         }
     }
 }

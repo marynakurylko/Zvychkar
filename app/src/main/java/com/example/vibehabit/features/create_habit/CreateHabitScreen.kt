@@ -33,6 +33,8 @@ import com.example.vibehabit.core.shared_components.IconSelector
 import com.example.vibehabit.core.shared_components.NumberStepper
 import com.example.vibehabit.core.shared_components.SegmentedControl
 import com.example.vibehabit.core.theme.ui.theme.HabitTrackerTheme
+import com.example.vibehabit.core.ui.UiEvent
+import com.example.vibehabit.core.utils.HabitConstants
 import com.example.vibehabit.shared_viewmodels.HabitsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,9 +51,9 @@ fun CreateHabitScreen(
         formViewModel.initData(habitToEdit)
     }
 
-    val neonColors = listOf("#9D4EDD", "#00E5FF", "#FF007F", "#00FF7F", "#FF9800")
-    val icons = listOf(Icons.Filled.Bolt, Icons.Filled.Favorite, Icons.Filled.DirectionsBike, Icons.Filled.Book)
-    val iconNames = listOf("Bolt", "Favorite", "Bike", "Book")
+    val neonColors = HabitConstants.NEON_COLORS
+    val icons = HabitConstants.HabitIcon.entries.map { it.imageVector }
+    val iconNames = HabitConstants.HabitIcon.entries.map { it.iconName }
     val frequencies = listOf("Daily", "Weekly", "Custom")
     val frequencyLabels = listOf(
         stringResource(R.string.freq_daily),
@@ -77,13 +79,19 @@ fun CreateHabitScreen(
     }
 
     LaunchedEffect(Unit) {
-        // ТЕПЕР СЛУХАЄМО ПОДІЇ ТІЛЬКИ ВІД FORM VIEWMODEL
-        formViewModel.uiEvent.collect { message ->
+        formViewModel.uiEvent.collect { event ->
             formViewModel.onEvent(CreateHabitEvent.SetSaving(false))
-            if (message == "SUCCESS") {
-                onBackClick()
-            } else {
-                snackbarHostState.showSnackbar(message)
+
+            when (event) {
+                is UiEvent.Success -> {
+                    onBackClick()
+                }
+                is UiEvent.Error -> {
+                    snackbarHostState.showSnackbar(context.getString(event.messageResId))
+                }
+                is UiEvent.ErrorText -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
             }
         }
     }

@@ -17,24 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.core.models.Habit
+import com.example.vibehabit.core.utils.HabitConstants
 import com.example.vibehabit.R
 import java.time.LocalDate
-
-fun getIconByName(name: String): ImageVector {
-    return when (name) {
-        "Favorite" -> Icons.Filled.Favorite
-        "Bike" -> Icons.Filled.DirectionsBike
-        "Book" -> Icons.Filled.Book
-        else -> Icons.Filled.Bolt
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,8 +123,9 @@ fun HabitCard(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
+                        // ВИКОРИСТОВУЄМО КОНСТАНТИ
                         Icon(
-                            imageVector = getIconByName(habit.iconName),
+                            imageVector = HabitConstants.HabitIcon.getByName(habit.iconName),
                             contentDescription = habit.name,
                             tint = cardColor,
                             modifier = Modifier.size(24.dp)
@@ -152,27 +144,25 @@ fun HabitCard(
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Локалізуємо частоту, якщо вона приходить як константа
                             val displayFrequency = when (habit.frequency) {
                                 "Daily" -> stringResource(R.string.freq_daily)
                                 "Weekly" -> stringResource(R.string.freq_weekly)
-                                else -> habit.frequency // Для Custom вже приходить сформований рядок
+                                else -> habit.frequency
                             }
-                            
+
                             Text(
                                 text = displayFrequency,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-                            // Показуємо вогник, тільки якщо стрік більше 0
                             if (habit.currentStreak > 0) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = stringResource(R.string.streak_format, habit.currentStreak),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFFF9800) // Яскраво-помаранчевий
+                                    color = Color(0xFFFF9800)
                                 )
                             }
                         }

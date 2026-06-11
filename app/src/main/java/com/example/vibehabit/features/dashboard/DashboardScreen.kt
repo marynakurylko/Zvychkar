@@ -45,17 +45,20 @@ import nl.dionsegijn.konfetti.core.emitter.Emitter
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.vibehabit.features.auth.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    viewModel: HabitsViewModel = viewModel(),
+    viewModel: HabitsViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     onAddHabitClick: () -> Unit,
     onHabitClick: (Int) -> Unit
-) {
+){
     val habitsState by viewModel.habitsState.collectAsState()
     val username by viewModel.username.collectAsState()
-    val isEmailVerified by viewModel.isEmailVerified.collectAsState()
+    val isEmailVerified by authViewModel.isEmailVerified.collectAsState()
     var showConfetti by remember { mutableStateOf(false) }
 
     var resendCooldown by remember { mutableStateOf(0) }
@@ -226,7 +229,7 @@ fun DashboardScreen(
                                             bannerMessage = sendingMsg
                                             isBannerError = false
 
-                                            viewModel.resendVerificationEmail(
+                                            authViewModel.resendVerificationEmail(
                                                 onSuccess = {
                                                     isBannerError = false
                                                     bannerMessage = successMsg
@@ -253,7 +256,7 @@ fun DashboardScreen(
                                             bannerMessage = checkingMsg
                                             isBannerError = false
 
-                                            viewModel.reloadUser(
+                                            authViewModel.reloadUser(
                                                 onResult = { verified ->
                                                     if (!verified) {
                                                         isBannerError = true
