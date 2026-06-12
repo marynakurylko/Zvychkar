@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.core.models.Habit
@@ -207,6 +208,35 @@ fun HabitCard(
                     modifier = Modifier.size(20.dp)
                 )
             }
+        }
+    }
+}
+
+@Preview(name = "Light Mode", showBackground = true)
+@Preview(name = "Dark Mode", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun HabitCardPreview() {
+    val sampleHabit = Habit(
+        id = "1",
+        name = "Читати книгу",
+        isFavorite = true,
+        colorHex = "#9D4EDD",
+        completedDates = listOf(LocalDate.now().toString()), // Звичка відмічена як виконана сьогодні
+        targetDays = 30,
+        iconName = "Book",
+        frequency = "Daily",
+        reminderTime = "20:00"
+    )
+
+    MaterialTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            HabitCard(
+                habit = sampleHabit,
+                onCheckedChange = {},
+                onFavoriteClick = {},
+                onDeleteClick = {},
+                onCardClick = {}
+            )
         }
     }
 }

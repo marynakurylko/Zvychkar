@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
@@ -147,7 +148,7 @@ fun NumberStepper(
             colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
         ) {
             Icon(
-                imageVector = Icons.Filled.Remove, 
+                imageVector = Icons.Filled.Remove,
                 contentDescription = stringResource(R.string.stepper_decrease)
             )
         }
@@ -166,9 +167,28 @@ fun NumberStepper(
             colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
         ) {
             Icon(
-                imageVector = Icons.Filled.Add, 
+                imageVector = Icons.Filled.Add,
                 contentDescription = stringResource(R.string.stepper_increase)
             )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun FormComponentsPreview() {
+    MaterialTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            SegmentedControl(items = listOf("Daily", "Weekly", "Custom"), selectedIndex = 0, onItemSelection = {})
+
+            IconSelector(icons = listOf(Icons.Filled.Add, Icons.Filled.Remove), selectedIndex = 0, onIconSelected = {})
+
+            ColorSelector(colors = listOf("#8A2BE2", "#00BCD4", "#FF9800"), selectedColorHex = "#8A2BE2", onColorSelected = {})
+
+            NumberStepper(value = 7, onValueChange = {})
         }
     }
 }

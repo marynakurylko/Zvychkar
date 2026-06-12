@@ -13,8 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.vibehabit.core.utils.HabitConstants
 
 @Composable
 fun ColorPicker(
@@ -22,16 +22,26 @@ fun ColorPicker(
     onColorSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Наша палітра (включаючи твій фіолетовий)
+    val colors = listOf(
+        "#8A2BE2", // Фіолетовий (Primary)
+        "#00BCD4", // Блакитний
+        "#FF9800", // Помаранчевий
+        "#E91E63", // Рожевий
+        "#4CAF50", // Зелений
+        "#F44336"  // Червоний
+    )
+
+    // LazyRow — це як LazyColumn, тільки горизонтальний скрол
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
-
-        items(HabitConstants.NEON_COLORS) { hexString ->
+        items(colors) { hexString ->
             val color = Color(android.graphics.Color.parseColor(hexString))
             val isSelected = hexString == selectedColorHex
-            val onClick = remember(hexString, onColorSelected) { { onColorSelected(hexString) } }
+            val onClick = remember(hexString, onColorSelected) { { onColorSelected(hexString) } } // ДОДАНО
 
             Box(
                 modifier = Modifier
@@ -44,6 +54,19 @@ fun ColorPicker(
                         shape = CircleShape
                     )
                     .clickable(onClick = onClick)
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ColorPickerPreview() {
+    MaterialTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            ColorPicker(
+                selectedColorHex = "#8A2BE2",
+                onColorSelected = {}
             )
         }
     }
