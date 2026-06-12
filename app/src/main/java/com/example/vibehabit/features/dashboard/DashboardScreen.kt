@@ -53,7 +53,7 @@ import com.example.vibehabit.features.settings.ProfileViewModel
 fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
-    profileViewModel: ProfileViewModel = hiltViewModel(), // ДОДАНО
+    profileViewModel: ProfileViewModel = hiltViewModel(),
     onAddHabitClick: () -> Unit,
     onHabitClick: (String) -> Unit
 ) {
@@ -78,12 +78,10 @@ fun DashboardScreen(
     val today = LocalDate.now()
     val todayStr = today.toString()
 
-    // Витягуємо безпечний список для загальної статистики (навіть під час завантаження)
     val currentHabits = (habitsState as? UiState.Success)?.data ?: emptyList()
     val totalHabitsToday = currentHabits.size
     val completedHabitsToday = currentHabits.count { it.completedDates.contains(todayStr) }
 
-    // Форматування дати
     val dateFormat = stringResource(R.string.dashboard_date_format)
     val dateFormatter = DateTimeFormatter.ofPattern(dateFormat)
     val dateText = today.format(dateFormatter).replaceFirstChar { it.uppercase() }
@@ -103,7 +101,6 @@ fun DashboardScreen(
     val checkingMsg = stringResource(R.string.checking_label)
     val notVerifiedMsg = stringResource(R.string.email_not_verified)
 
-    // --- ОПТИМІЗАЦІЯ ЛЯМБД ДЛЯ СПИСКУ ЗВИЧОК ---
     val onFavoriteToggle: (String) -> Unit = remember(viewModel) {
         { habitId -> viewModel.toggleHabitFavorite(habitId) }
     }
@@ -280,7 +277,6 @@ fun DashboardScreen(
                     }
                 }
 
-                // ВІДОБРАЖЕННЯ СПИСКУ ЗАЛЕЖНО ВІД СТАНУ (Loading / Error / Success)
                 when (val state = habitsState) {
                     is UiState.Loading -> {
                         item {

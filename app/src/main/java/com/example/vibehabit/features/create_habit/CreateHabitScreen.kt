@@ -42,7 +42,6 @@ import com.example.vibehabit.shared_viewmodels.HabitsViewModel
 fun CreateHabitScreen(
     habitToEdit: Habit? = null,
     onBackClick: () -> Unit,
-    // ЗВЕРНИ УВАГУ: Ми прибрали onSaveClick та HabitsViewModel!
     formViewModel: CreateHabitViewModel = hiltViewModel()
 ) {
     val uiState by formViewModel.uiState.collectAsState()
@@ -96,7 +95,6 @@ fun CreateHabitScreen(
         }
     }
 
-    // --- ОПТИМІЗАЦІЯ ЛЯМБД ---
     val onNameChanged: (String) -> Unit = remember(formViewModel) {
         { formViewModel.onEvent(CreateHabitEvent.NameChanged(it)) }
     }
@@ -213,7 +211,6 @@ fun CreateHabitScreen(
             Button(
                 onClick = {
                     if (uiState.name.isNotBlank() && !uiState.isSaving) {
-                        // ТЕПЕР ФОРМА САМА ВИКЛИКАЄ ЗБЕРЕЖЕННЯ!
                         formViewModel.saveHabit()
                     }
                 },

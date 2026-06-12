@@ -17,14 +17,14 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = NeonPurple, // Головний акцент
-    background = BackgroundDark, // Глобальний фон
-    surface = SurfaceDark, // Фон для карток (HabitCard)
-    surfaceVariant = SurfaceVariantDark, // Фон для полів вводу
-    onPrimary = TextPrimary, // Текст на акцентних кнопках
-    onBackground = TextPrimary, // Головний текст
+    primary = NeonPurple,
+    background = BackgroundDark,
+    surface = SurfaceDark,
+    surfaceVariant = SurfaceVariantDark,
+    onPrimary = TextPrimary,
+    onBackground = TextPrimary,
     onSurface = TextPrimary,
-    onSurfaceVariant = TextSecondary // Текст-плейсхолдер
+    onSurfaceVariant = TextSecondary
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -41,8 +41,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun HabitTrackerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // ВАЖЛИВО: Вимикаємо динамічні кольори, щоб система не перебивала наш неон!
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -54,7 +53,6 @@ fun HabitTrackerTheme(
         else -> LightColorScheme
     }
 
-    // Фарбуємо системний статус-бар (там, де годинник і батарея) під наш глибокий фон
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -67,7 +65,7 @@ fun HabitTrackerTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // Можна буде потім підключити сюди футуристичний шрифт!
+        typography = Typography,
         content = content
     )
 }

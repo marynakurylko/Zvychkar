@@ -20,15 +20,13 @@ import java.time.LocalDate
 
 @Composable
 fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
-    val weeksToDisplay = 15 // Показуємо останні ~3.5 місяці
+    val weeksToDisplay = 15
     val today = LocalDate.now()
 
-    // Обчислюємо дату початку (Понеділок 15 тижнів тому)
-    val currentDayOfWeek = today.dayOfWeek.value // 1 = Пн, 7 = Нд
+    val currentDayOfWeek = today.dayOfWeek.value
     val daysToSubtract = (weeksToDisplay - 1) * 7 + (currentDayOfWeek - 1)
     val startDate = today.minusDays(daysToSubtract.toLong())
 
-    // Дні тижня для підписів зліва - беремо з ресурсів
     val weekDaysLabels = listOf(
         stringResource(R.string.day_mon),
         stringResource(R.string.day_wed),
@@ -44,14 +42,13 @@ fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Підписи днів тижня
         Column(
             modifier = Modifier.padding(end = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             for (day in 0..6) {
                 Box(modifier = Modifier.height(14.dp), contentAlignment = Alignment.Center) {
-                    if (day % 2 == 0) { // Виводимо підпис через день (Пн, Ср, Пт, Нд)
+                    if (day % 2 == 0) {
                         Text(
                             text = weekDaysLabels.getOrNull(day / 2) ?: "",
                             fontSize = 10.sp,
@@ -62,7 +59,6 @@ fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
             }
         }
 
-        // Сама сітка хітмапи
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             for (week in 0 until weeksToDisplay) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -71,13 +67,12 @@ fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
                         val isFuture = cellDate.isAfter(today)
                         val count = heatmapData[cellDate] ?: 0
 
-                        // Палітра інтенсивності (Неоновий блакитний)
                         val cellColor = when {
                             isFuture -> Color.Transparent
                             count == 0 -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                            count == 1 -> Color(0xFF00606B) // Темно-бірюзовий
-                            count == 2 -> Color(0xFF00A2B8) // Середній бірюзовий
-                            count >= 3 -> Color(0xFF00E5FF) // Яскравий неон
+                            count == 1 -> Color(0xFF00606B)
+                            count == 2 -> Color(0xFF00A2B8)
+                            count >= 3 -> Color(0xFF00E5FF)
                             else -> Color.Transparent
                         }
 

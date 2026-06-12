@@ -66,11 +66,9 @@ fun OnboardingScreen(onFinish: () -> Unit) {
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val coroutineScope = rememberCoroutineScope()
 
-    // Системний запит дозволу на сповіщення (Android 13+)
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        // Навіть якщо користувач відмовив, пускаємо його в застосунок
         onFinish()
     }
 
@@ -84,7 +82,6 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Кнопка Skip (Пропустити) зверху
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -99,7 +96,6 @@ fun OnboardingScreen(onFinish: () -> Unit) {
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Карусель (Pager)
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth()
@@ -109,7 +105,6 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Велика іконка в круглому неоновому фоні
                     Box(
                         modifier = Modifier
                             .size(160.dp)
@@ -148,7 +143,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Індикатори сторінок (Dots)
+            // (Dots)
             Row(
                 modifier = Modifier.padding(vertical = 32.dp),
                 horizontalArrangement = Arrangement.Center
@@ -171,19 +166,16 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 }
             }
 
-            // Кнопка Навігації
             val isLastPage = pagerState.currentPage == pages.size - 1
             Button(
                 onClick = {
                     if (isLastPage) {
-                        // Якщо це остання сторінка - запитуємо дозвіл і йдемо далі
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         } else {
-                            onFinish() // Для старіших Android дозвіл не потрібен
+                            onFinish()
                         }
                     } else {
-                        // Гортаємо на наступну сторінку
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }

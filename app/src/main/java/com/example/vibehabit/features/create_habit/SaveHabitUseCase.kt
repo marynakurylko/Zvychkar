@@ -19,7 +19,6 @@ class SaveHabitUseCase @Inject constructor(
         isFavorite: Boolean = false,
         completedDates: List<String> = emptyList()
     ): Result<Unit> {
-        // 1. ВАЛІДАЦІЯ (Бізнес-правила)
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) {
             return Result.failure(Exception("Назва звички не може бути порожньою"))
@@ -31,7 +30,6 @@ class SaveHabitUseCase @Inject constructor(
         // Тут ти можеш додати будь-яку складну логіку форматування "frequency",
         // щоб на екрані CreateHabitScreen не було "брудного" коду.
 
-        // 2. СТВОРЕННЯ МОДЕЛІ
         val habitToSave = Habit(
             id = habitId,
             name = trimmedName,
@@ -44,7 +42,6 @@ class SaveHabitUseCase @Inject constructor(
             reminderTime = reminderTime
         )
 
-        // 3. ПЕРЕДАЧА В РЕПОЗИТОРІЙ
         return habitRepository.saveHabit(userId, habitToSave)
     }
 }

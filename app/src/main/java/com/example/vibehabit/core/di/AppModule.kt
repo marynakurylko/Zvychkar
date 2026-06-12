@@ -32,7 +32,6 @@ object AppModule {
     fun provideFirebaseFirestore(): FirebaseFirestore {
         val firestore = FirebaseFirestore.getInstance()
 
-        // Вмикаємо Offline-first стратегію
         val settings = FirebaseFirestoreSettings.Builder()
             .setLocalCacheSettings(
                 PersistentCacheSettings.newBuilder()

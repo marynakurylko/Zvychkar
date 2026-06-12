@@ -14,16 +14,13 @@ import javax.inject.Singleton
 class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth
 ) {
-    // Зручний доступ до поточного юзера
     val currentUser: FirebaseUser? get() = auth.currentUser
 
-    // МАГІЯ: Перетворюємо колбеки Firebase на сучасний Kotlin Flow
     fun getAuthStateFlow(): Flow<FirebaseUser?> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { authState ->
             trySend(authState.currentUser)
         }
         auth.addAuthStateListener(listener)
-        // Коли ViewModel відписується, ми автоматично видаляємо слухача
         awaitClose { auth.removeAuthStateListener(listener) }
     }
 

@@ -44,7 +44,6 @@ class SettingsViewModel @Inject constructor(application: Application) : AndroidV
             dataStore.edit { preferences ->
                 preferences[LANGUAGE_KEY] = languageCode
             }
-            // Також оновлюємо AppCompatDelegate для миттєвої зміни мови в системі
             val appLocale = LocaleListCompat.forLanguageTags(languageCode)
             AppCompatDelegate.setApplicationLocales(appLocale)
         }

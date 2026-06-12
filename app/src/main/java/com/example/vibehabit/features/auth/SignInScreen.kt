@@ -60,7 +60,6 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Логотип або Заголовок
             Text(
                 text = stringResource(R.string.app_name_logo),
                 fontSize = 32.sp,
@@ -76,7 +75,6 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Поле Email
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it; errorMessage = null },
@@ -97,7 +95,6 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Поле Пароль
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it; errorMessage = null },
@@ -124,7 +121,7 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
                 ) {
                     TextButton(
                         onClick = {
-                            resetEmail = email // Зручність: підставляємо email, якщо юзер його вже ввів
+                            resetEmail = email
                             resetMessage = null
                             showResetDialog = true
                         },
@@ -142,7 +139,6 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Відображення помилки
             if (errorMessage != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
@@ -152,7 +148,6 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
 
             val fillAllFieldsError = stringResource(R.string.fill_all_fields_error)
 
-            // Головна кнопка (Вхід / Реєстрація)
             Button(
                 onClick = {
                     if (email.isNotBlank() && password.isNotBlank()) {
@@ -180,7 +175,6 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Перемикач режимів
             TextButton(onClick = { isLoginMode = !isLoginMode; errorMessage = null }) {
                 Text(
                     text = if (isLoginMode) stringResource(R.string.no_account_link) else stringResource(R.string.have_account_link),
@@ -190,7 +184,6 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Розділювач "АБО"
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -209,14 +202,12 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
 
             val googleAuthError = stringResource(R.string.google_auth_error)
 
-            // Кнопка входу через Google
             OutlinedButton(
                 onClick = {
                     coroutineScope.launch {
                         try {
                             val credentialManager = CredentialManager.create(context)
 
-                            // ВАЖЛИВО: Встав сюди скопійований Web Client ID з Кроку 1!
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(false)
                                 .setServerClientId("1078407698674-dg28hslug5tjde36q74q9lseetvl7k58.apps.googleusercontent.com")
@@ -227,19 +218,16 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
                                 .addCredentialOption(googleIdOption)
                                 .build()
 
-                            // Показуємо нативну шторку Android
                             val result = credentialManager.getCredential(context, request)
                             val credential = result.credential
 
                             if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                                 val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                                // Передаємо токен у ViewModel
                                 viewModel.signInWithGoogle(googleIdTokenCredential.idToken) { error ->
                                     errorMessage = error
                                 }
                             }
                         } catch (e: GetCredentialException) {
-                            // Якщо користувач просто закрив шторку, ми не показуємо страшну помилку
                             if (!e.message.toString().contains("cancelled")) {
                                 errorMessage = googleAuthError
                             }
@@ -257,12 +245,10 @@ fun SignInScreen(viewModel: AuthViewModel = hiltViewModel()) {
                 ),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                // Можеш замінити на іконку Google, якщо є векторна, або використати текст
                 Text(stringResource(R.string.continue_with_google), fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
         }
 
-        // МОДАЛКА ВІДНОВЛЕННЯ ПАРОЛЯ
         if (showResetDialog) {
             AlertDialog(
                 onDismissRequest = { if (!isResetting) showResetDialog = false },

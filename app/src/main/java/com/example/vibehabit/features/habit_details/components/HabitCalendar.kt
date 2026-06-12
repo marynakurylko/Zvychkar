@@ -46,7 +46,6 @@ fun HabitCalendar(
             .padding(20.dp)
     ) {
         Column {
-            // Заголовок (Місяць і Рік) - використовуємо Locale.getDefault() для перекладу місяців
             val monthName = currentMonth.month.getDisplayName(TextStyle.FULL_STANDALONE, Locale.getDefault())
             Text(
                 text = monthName.replaceFirstChar { it.uppercase() } + " " + currentMonth.year,
@@ -56,7 +55,6 @@ fun HabitCalendar(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Дні тижня - беремо з ресурсів
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 val daysOfWeek = listOf(
                     stringResource(R.string.day_mon),

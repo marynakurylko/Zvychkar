@@ -46,7 +46,6 @@ fun SettingsScreen(
         stringResource(R.string.language_ukrainian)
     )
 
-    // Стан для показу модалок підтвердження виходу
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var authErrorMessage by remember { mutableStateOf<String?>(null) }
@@ -90,7 +89,6 @@ fun SettingsScreen(
             ProfileBlock(dashboardViewModel = dashboardViewModel, profileViewModel = profileViewModel)
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Картка з налаштуванням теми
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -153,7 +151,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Кнопка Sign Out
+            // Sign Out
             Button(
                 onClick = { showLogoutDialog = true },
                 modifier = Modifier
@@ -190,7 +188,6 @@ fun SettingsScreen(
             }
         }
 
-        // Модалка підтвердження
         if (showLogoutDialog) {
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
@@ -233,7 +230,7 @@ fun SettingsScreen(
                     TextButton(
                         onClick = {
                             showDeleteDialog = false
-                            deletionErrorByFirebase = null // Скидаємо попередній стан
+                            deletionErrorByFirebase = null
                             authViewModel.deleteAccount(
                                 onSuccess = {
                                     authViewModel.signOut()
@@ -276,7 +273,6 @@ fun SettingsScreen(
             )
         }
 
-        // МОДАЛКА ЗВОРОТНОГО ЗВ'ЯЗКУ
         if (showFeedbackDialog) {
             AlertDialog(
                 onDismissRequest = { if (!isFeedbackSubmitting) showFeedbackDialog = false },
@@ -349,7 +345,6 @@ fun SettingsScreen(
             )
         }
 
-        // ПОВІДОМЛЕННЯ ПРО УСПІШНУ ВІДПРАВКУ
         if (feedbackSuccessMessage != null) {
             AlertDialog(
                 onDismissRequest = { feedbackSuccessMessage = null },

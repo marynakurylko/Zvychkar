@@ -51,11 +51,9 @@ fun ProfileBlock(
     val habitsState by dashboardViewModel.habitsState.collectAsState()
     val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
 
-    // Стейт для режиму редагування імені
     var isEditing by remember { mutableStateOf(false) }
     var nameInput by remember(username) { mutableStateOf(username) }
 
-    // Маленька гейміфікація: вираховуємо ранг залежно від кількості звичок
     val userRank = when {
         habits.isEmpty() -> stringResource(R.string.rank_newbie)
         habits.sumOf { it.completedDates.size } > 20 -> stringResource(R.string.rank_ranger)
@@ -63,7 +61,6 @@ fun ProfileBlock(
         else -> stringResource(R.string.rank_beginner)
     }
 
-    // Перша літера для аватарки
     val avatarLetter = if (username.isNotBlank()) username.first().uppercase() else "?"
 
     Row(
@@ -76,7 +73,6 @@ fun ProfileBlock(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 1. Неонова градієнтна аватарка
         Box(
             modifier = Modifier
                 .size(64.dp)
@@ -98,7 +94,6 @@ fun ProfileBlock(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // 2. Інформаційний блок профілю
         Column(modifier = Modifier.weight(1f)) {
             if (isEditing) {
                 TextField(
@@ -134,7 +129,6 @@ fun ProfileBlock(
             }
         }
 
-        // 3. Кнопка перемикання режимів
         IconButton(
             onClick = {
                 if (isEditing) {

@@ -31,11 +31,10 @@ class HabitRepository @Inject constructor(
 
                 if (snapshot != null) {
                     val habits = snapshot.documents.mapNotNull { doc ->
-                        // Надійне ручне мапування, щоб уникнути Crash при невідповідності типів у Firestore
                         val data = doc.data ?: return@mapNotNull null
                         try {
                             Habit(
-                                id = doc.id, // Завжди використовуємо ID документа як String
+                                id = doc.id,
                                 name = data["name"]?.toString() ?: "",
                                 isFavorite = data["isFavorite"] as? Boolean ?: false,
                                 colorHex = data["colorHex"]?.toString() ?: "",

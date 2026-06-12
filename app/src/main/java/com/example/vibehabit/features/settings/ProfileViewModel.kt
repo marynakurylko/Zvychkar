@@ -40,7 +40,6 @@ class ProfileViewModel @Inject constructor(
                 _username.value = name ?: defaultUser
             }
         }
-        // Автоматично ставимо ім'я з пошти при першому логіні
         viewModelScope.launch {
             authRepository.getAuthStateFlow().collect { user ->
                 if (user != null && _username.value == defaultUser && user.email != null) {

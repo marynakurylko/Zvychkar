@@ -120,7 +120,6 @@ class CreateHabitViewModel @Inject constructor(
 
             val finalReminderTime = if (state.isReminderEnabled) state.reminderTime else null
 
-            // ГЕНЕРУЄМО UUID МИТТЄВО (без зайвих запитів у базу!)
             val habitId = currentHabitId ?: java.util.UUID.randomUUID().toString()
 
             saveHabitUseCase(
@@ -145,7 +144,6 @@ class CreateHabitViewModel @Inject constructor(
     }
 
     private fun handleReminder(habitId: String, habitName: String, reminderTime: String?) {
-        // Конвертуємо унікальний рядок в Int для Android AlarmManager
         val notificationId = habitId.hashCode()
 
         if (reminderTime != null) {

@@ -51,7 +51,6 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
 
-    // НАШІ ТРИ НЕЗАЛЕЖНІ VIEWMODELS ЗАМІСТЬ ОДНІЄЇ
     val dashboardViewModel: DashboardViewModel = hiltViewModel()
     val authViewModel: AuthViewModel = hiltViewModel()
     val profileViewModel: ProfileViewModel = hiltViewModel()

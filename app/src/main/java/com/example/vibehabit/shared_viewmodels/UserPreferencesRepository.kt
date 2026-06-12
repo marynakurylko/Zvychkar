@@ -12,12 +12,11 @@ import javax.inject.Singleton
 
 @Singleton
 class UserPreferencesRepository @Inject constructor(
-    private val dataStore: DataStore<Preferences> // Hilt автоматично передасть сюди DataStore з AppModule
+    private val dataStore: DataStore<Preferences>
 ) {
     private val ONBOARDING_KEY = booleanPreferencesKey("is_onboarding_completed")
     private val USERNAME_KEY = stringPreferencesKey("username")
 
-    // Перетворюємо дані з DataStore на зручний Flow
     val isOnboardingCompletedFlow: Flow<Boolean?> = dataStore.data.map { preferences ->
         preferences[ONBOARDING_KEY]
     }
