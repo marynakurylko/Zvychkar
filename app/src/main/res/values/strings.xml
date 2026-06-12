@@ -174,4 +174,6 @@
     <!-- Widget -->
     <string name="widget_login_prompt">Please log in to the app</string>
     <string name="widget_empty_state">No plans for today!</string>
+    <string name="error_saving_habit">Error save habit</string>
+    <string name="error_updating_habit">Помилка оновлення звички</string>
 </resources>

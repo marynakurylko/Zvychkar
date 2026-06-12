@@ -1,0 +1,151 @@
+package com.example.vibehabit.features.settings.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.vibehabit.R
+import com.example.vibehabit.shared_viewmodels.HabitsViewModel
+import com.example.vibehabit.core.ui.UiState
+import com.example.vibehabit.features.dashboard.DashboardViewModel
+import com.example.vibehabit.features.settings.ProfileViewModel
+
+@Composable
+fun ProfileBlock(
+    dashboardViewModel: DashboardViewModel,
+    profileViewModel: ProfileViewModel
+) {
+    val username by profileViewModel.username.collectAsState()
+    val habitsState by dashboardViewModel.habitsState.collectAsState()
+    val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
+
+    var isEditing by remember { mutableStateOf(false) }
+    var nameInput by remember(username) { mutableStateOf(username) }
+
+    val userRank = when {
+        habits.isEmpty() -> stringResource(R.string.rank_newbie)
+        habits.sumOf { it.completedDates.size } > 20 -> stringResource(R.string.rank_ranger)
+        habits.sumOf { it.completedDates.size } > 5 -> stringResource(R.string.rank_enthusiast)
+        else -> stringResource(R.string.rank_beginner)
+    }
+
+    val avatarLetter = if (username.isNotBlank()) username.first().uppercase() else "?"
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                RoundedCornerShape(24.dp)
+            )
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color(0xFF9D4EDD), Color(0xFF00E5FF))
+                    ),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = avatarLetter,
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            if (isEditing) {
+                TextField(
+                    value = nameInput,
+                    onValueChange = { nameInput = it },
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    textStyle = TextStyle(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                Text(
+                    text = username,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.rank_label, userRank),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        IconButton(
+            onClick = {
+                if (isEditing) {
+                    if (nameInput.isNotBlank()) {
+                        profileViewModel.updateUsername(nameInput.trim())
+                    }
+                    isEditing = false
+                } else {
+                    isEditing = true
+                }
+            }
+        ) {
+            Icon(
+                imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                contentDescription = stringResource(R.string.edit_profile_desc),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}

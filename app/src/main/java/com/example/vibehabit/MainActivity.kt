@@ -17,10 +17,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.vibehabit.navigation.AppNavigation
-import com.example.vibehabit.ui.theme.HabitTrackerTheme
-import com.example.vibehabit.viewmodels.SettingsViewModel
+import com.example.vibehabit.core.navigation.AppNavigation
+import com.example.vibehabit.core.notifications.NotificationHelper
+import com.example.vibehabit.core.theme.ui.theme.HabitTrackerTheme
+import com.example.vibehabit.features.settings.SettingsViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -34,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        com.example.vibehabit.notifications.NotificationHelper.createNotificationChannel(this)
+        NotificationHelper.createNotificationChannel(this)
         checkNotificationPermission()
 
         setContent {

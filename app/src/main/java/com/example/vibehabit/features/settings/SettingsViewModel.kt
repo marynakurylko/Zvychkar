@@ -1,0 +1,51 @@
+package com.example.vibehabit.features.settings
+
+import android.app.Application
+import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+val Context.settingsDataStore by preferencesDataStore(name = "settings_prefs")
+
+@HiltViewModel
+class SettingsViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
+    private val dataStore = application.settingsDataStore
+
+    private val DARK_THEME_KEY = booleanPreferencesKey("dark_theme")
+    private val LANGUAGE_KEY = stringPreferencesKey("language")
+
+    val isDarkTheme: Flow<Boolean?> = dataStore.data
+        .map { preferences -> preferences[DARK_THEME_KEY] }
+
+    val language: Flow<String> = dataStore.data
+        .map { preferences -> preferences[LANGUAGE_KEY] ?: "en" }
+
+    fun toggleTheme(isDark: Boolean) {
+        viewModelScope.launch {
+            dataStore.edit { preferences ->
+                preferences[DARK_THEME_KEY] = isDark
+            }
+        }
+    }
+
+    fun setLanguage(languageCode: String) {
+        viewModelScope.launch {
+            dataStore.edit { preferences ->
+                preferences[LANGUAGE_KEY] = languageCode
+            }
+            val appLocale = LocaleListCompat.forLanguageTags(languageCode)
+            AppCompatDelegate.setApplicationLocales(appLocale)
+        }
+    }
+}

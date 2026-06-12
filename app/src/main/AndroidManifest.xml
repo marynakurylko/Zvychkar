@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
+        android:name=".VibeHabitApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,7 +16,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VibeHabit"
-        android:localeConfig="@xml/locales_config">
+        android:localeConfig="@xml/locales_config"
+        >
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
@@ -42,11 +44,11 @@
         </activity>
 
         <receiver
-            android:name=".notifications.HabitAlarmReceiver"
+            android:name=".core.notifications.HabitAlarmReceiver"
             android:exported="false" />
 
         <receiver
-            android:name=".widget.HabitWidgetReceiver"
+            android:name=".core.widget.HabitWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
