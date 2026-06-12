@@ -123,7 +123,7 @@ class HabitWidget : GlanceAppWidget() {
                             ) {
                                 CheckBox(
                                     checked = isCompletedToday,
-                                    onCheckedChange = null,
+                                    onCheckedChange = toggleAction,
                                     colors = CheckboxDefaults.colors(
                                         checkedColor = ColorProvider(day = Color(0xFF9D4EDD), night = Color(0xFF9D4EDD)),
                                         uncheckedColor = ColorProvider(day = Color.Gray, night = Color.Gray)
