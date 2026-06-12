@@ -6,7 +6,7 @@ import java.time.LocalDate
 
 @Immutable
 data class Habit(
-    val id: Int = 0,
+    val id: String = "",
     val name: String = "",
     val isFavorite: Boolean = false,
     val colorHex: String = "",

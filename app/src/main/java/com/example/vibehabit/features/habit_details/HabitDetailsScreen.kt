@@ -20,13 +20,14 @@ import com.example.vibehabit.R
 import com.example.vibehabit.features.habit_details.components.HabitCalendar
 import com.example.vibehabit.features.habit_details.components.NeonProgressRing
 import com.example.vibehabit.core.ui.UiState
+import com.example.vibehabit.features.dashboard.DashboardViewModel
 import com.example.vibehabit.shared_viewmodels.HabitsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitDetailsScreen(
-    habitId: Int,
-    viewModel: HabitsViewModel,
+    habitId: String,
+    viewModel: DashboardViewModel,
     onBackClick: () -> Unit,
     onEditClick: () -> Unit
 ) {
@@ -51,7 +52,7 @@ fun HabitDetailsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack, 
+                            imageVector = Icons.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back_desc)
                         )
                     }
@@ -59,7 +60,7 @@ fun HabitDetailsScreen(
                 actions = {
                     IconButton(onClick = onEditClick) {
                         Icon(
-                            imageVector = Icons.Filled.Edit, 
+                            imageVector = Icons.Filled.Edit,
                             contentDescription = stringResource(R.string.edit_habit_desc)
                         )
                     }
@@ -96,11 +97,10 @@ fun HabitDetailsScreen(
                 textAlign = TextAlign.Center
             )
 
-            // Відображаємо частоту. Якщо це стандартні значення - перекладаємо.
             val displayFrequency = when (habit.frequency) {
                 "Daily" -> stringResource(R.string.freq_daily)
                 "Weekly" -> stringResource(R.string.freq_weekly)
-                else -> habit.frequency // Для Custom вже збережено локалізований рядок або формат
+                else -> habit.frequency
             }
 
             Text(
@@ -116,7 +116,6 @@ fun HabitDetailsScreen(
                     .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                // Картка "Поточна серія"
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = stringResource(R.string.streak_format, habit.currentStreak),
@@ -131,19 +130,17 @@ fun HabitDetailsScreen(
                     )
                 }
 
-                // Вертикальний розділювач
                 HorizontalDivider(
                     modifier = Modifier.height(40.dp).width(1.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 )
 
-                // Картка "Рекорд"
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = stringResource(R.string.best_streak_format, habit.bestStreak),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFD700) // Золотий колір
+                        color = Color(0xFFFFD700)
                     )
                     Text(
                         text = stringResource(R.string.best_streak),

@@ -39,11 +39,16 @@ import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
 import com.example.vibehabit.shared_viewmodels.HabitsViewModel
 import com.example.vibehabit.core.ui.UiState
+import com.example.vibehabit.features.dashboard.DashboardViewModel
+import com.example.vibehabit.features.settings.ProfileViewModel
 
 @Composable
-fun ProfileBlock(viewModel: HabitsViewModel) {
-    val username by viewModel.username.collectAsState()
-    val habitsState by viewModel.habitsState.collectAsState()
+fun ProfileBlock(
+    dashboardViewModel: DashboardViewModel,
+    profileViewModel: ProfileViewModel
+) {
+    val username by profileViewModel.username.collectAsState()
+    val habitsState by dashboardViewModel.habitsState.collectAsState()
     val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
 
     // Стейт для режиму редагування імені
@@ -77,7 +82,7 @@ fun ProfileBlock(viewModel: HabitsViewModel) {
                 .size(64.dp)
                 .background(
                     brush = Brush.linearGradient(
-                        colors = listOf(Color(0xFF9D4EDD), Color(0xFF00E5FF)) // Фіолетовий -> Блакитний неон
+                        colors = listOf(Color(0xFF9D4EDD), Color(0xFF00E5FF))
                     ),
                     shape = CircleShape
                 ),
@@ -96,7 +101,6 @@ fun ProfileBlock(viewModel: HabitsViewModel) {
         // 2. Інформаційний блок профілю
         Column(modifier = Modifier.weight(1f)) {
             if (isEditing) {
-                // Поле вводу, коли натиснули "Редагувати"
                 TextField(
                     value = nameInput,
                     onValueChange = { nameInput = it },
@@ -115,7 +119,6 @@ fun ProfileBlock(viewModel: HabitsViewModel) {
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
-                // Статичне відображення імені та рангу
                 Text(
                     text = username,
                     fontSize = 20.sp,
@@ -131,12 +134,12 @@ fun ProfileBlock(viewModel: HabitsViewModel) {
             }
         }
 
-        // 3. Кнопка перемикання режимів (Олівець / Галочка)
+        // 3. Кнопка перемикання режимів
         IconButton(
             onClick = {
                 if (isEditing) {
                     if (nameInput.isNotBlank()) {
-                        viewModel.updateUsername(nameInput.trim())
+                        profileViewModel.updateUsername(nameInput.trim())
                     }
                     isEditing = false
                 } else {

@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vibehabit.R
 import com.example.vibehabit.features.dashboard.components.DailySummaryCard
 import com.example.vibehabit.features.dashboard.components.HabitCard
@@ -47,17 +46,19 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.vibehabit.features.auth.AuthViewModel
+import com.example.vibehabit.features.settings.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    viewModel: HabitsViewModel = hiltViewModel(),
+    viewModel: DashboardViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
+    profileViewModel: ProfileViewModel = hiltViewModel(), // ДОДАНО
     onAddHabitClick: () -> Unit,
-    onHabitClick: (Int) -> Unit
-){
+    onHabitClick: (String) -> Unit
+) {
     val habitsState by viewModel.habitsState.collectAsState()
-    val username by viewModel.username.collectAsState()
+    val username by profileViewModel.username.collectAsState()
     val isEmailVerified by authViewModel.isEmailVerified.collectAsState()
     var showConfetti by remember { mutableStateOf(false) }
 
@@ -72,7 +73,7 @@ fun DashboardScreen(
         }
     }
 
-    var habitToDelete by remember { mutableStateOf<Int?>(null) }
+    var habitToDelete by remember { mutableStateOf<String?>(null) }
 
     val today = LocalDate.now()
     val todayStr = today.toString()
@@ -103,15 +104,15 @@ fun DashboardScreen(
     val notVerifiedMsg = stringResource(R.string.email_not_verified)
 
     // --- ОПТИМІЗАЦІЯ ЛЯМБД ДЛЯ СПИСКУ ЗВИЧОК ---
-    val onFavoriteToggle: (Int) -> Unit = remember(viewModel) {
+    val onFavoriteToggle: (String) -> Unit = remember(viewModel) {
         { habitId -> viewModel.toggleHabitFavorite(habitId) }
     }
 
-    val onDeleteHabit: (Int) -> Unit = remember {
+    val onDeleteHabit: (String) -> Unit = remember {
         { habitId -> habitToDelete = habitId }
     }
 
-    val onCardClicked: (Int) -> Unit = remember(onHabitClick) {
+    val onCardClicked: (String) -> Unit = remember(onHabitClick) {
         { habitId -> onHabitClick(habitId) }
     }
 

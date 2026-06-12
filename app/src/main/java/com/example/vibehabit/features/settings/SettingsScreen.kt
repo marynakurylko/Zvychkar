@@ -25,16 +25,18 @@ import androidx.compose.ui.text.style.TextAlign
 import com.example.vibehabit.features.settings.components.ProfileBlock
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.vibehabit.features.auth.AuthViewModel
+import com.example.vibehabit.features.dashboard.DashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
-    habitsViewModel: HabitsViewModel = hiltViewModel(),
+    dashboardViewModel: DashboardViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel = hiltViewModel()
-){
+    authViewModel: AuthViewModel = hiltViewModel(),
+    profileViewModel: ProfileViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
     val currentLanguage by settingsViewModel.language.collectAsState(initial = "en")
     val selectedLanguageIndex = if (currentLanguage == "uk") 1 else 0
@@ -85,7 +87,7 @@ fun SettingsScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            ProfileBlock(viewModel = habitsViewModel)
+            ProfileBlock(dashboardViewModel = dashboardViewModel, profileViewModel = profileViewModel)
             Spacer(modifier = Modifier.height(24.dp))
 
             // Картка з налаштуванням теми
@@ -309,7 +311,7 @@ fun SettingsScreen(
                         onClick = {
                             if (feedbackText.isNotBlank()) {
                                 isFeedbackSubmitting = true
-                                habitsViewModel.sendFeedback(
+                                profileViewModel.sendFeedback(
                                     message = feedbackText,
                                     onSuccess = {
                                         isFeedbackSubmitting = false

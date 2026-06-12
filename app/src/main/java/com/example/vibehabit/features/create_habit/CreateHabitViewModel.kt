@@ -7,7 +7,7 @@ import com.example.vibehabit.R
 import com.example.vibehabit.core.models.Habit
 import com.example.vibehabit.core.notifications.NotificationHelper
 import com.example.vibehabit.features.auth.AuthRepository
-import com.example.vibehabit.shared_viewmodels.HabitRepository
+import com.example.vibehabit.core.ui.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,11 +16,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.example.vibehabit.core.ui.UiEvent
 
 data class CreateHabitUiState(
     val name: String = "",
@@ -50,7 +48,6 @@ sealed class CreateHabitEvent {
 class CreateHabitViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val authRepository: AuthRepository,
-    private val habitRepository: HabitRepository,
     private val saveHabitUseCase: SaveHabitUseCase
 ) : ViewModel() {
 
@@ -61,7 +58,7 @@ class CreateHabitViewModel @Inject constructor(
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
     private var isInitialized = false
-    private var currentHabitId: Int? = null
+    private var currentHabitId: String? = null // Змінено на String
     private var currentIsFavorite = false
     private var currentCompletedDates = emptyList<String>()
 
@@ -123,10 +120,8 @@ class CreateHabitViewModel @Inject constructor(
 
             val finalReminderTime = if (state.isReminderEnabled) state.reminderTime else null
 
-            val habitId = currentHabitId ?: run {
-                val currentHabits = habitRepository.getHabitsFlow(userId).first()
-                (currentHabits.maxOfOrNull { it.id } ?: 0) + 1
-            }
+            // ГЕНЕРУЄМО UUID МИТТЄВО (без зайвих запитів у базу!)
+            val habitId = currentHabitId ?: java.util.UUID.randomUUID().toString()
 
             saveHabitUseCase(
                 userId = userId,
@@ -149,16 +144,19 @@ class CreateHabitViewModel @Inject constructor(
         }
     }
 
-    private fun handleReminder(habitId: Int, habitName: String, reminderTime: String?) {
+    private fun handleReminder(habitId: String, habitName: String, reminderTime: String?) {
+        // Конвертуємо унікальний рядок в Int для Android AlarmManager
+        val notificationId = habitId.hashCode()
+
         if (reminderTime != null) {
             val parts = reminderTime.split(":")
             if (parts.size == 2) {
                 val hour = parts[0].toIntOrNull() ?: 9
                 val minute = parts[1].toIntOrNull() ?: 0
-                NotificationHelper.scheduleHabitReminder(context, habitId, habitName, hour, minute)
+                NotificationHelper.scheduleHabitReminder(context, notificationId, habitName, hour, minute)
             }
         } else {
-            NotificationHelper.cancelHabitReminder(context, habitId)
+            NotificationHelper.cancelHabitReminder(context, notificationId)
         }
     }
 }

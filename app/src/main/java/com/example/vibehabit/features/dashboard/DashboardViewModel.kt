@@ -1,15 +1,15 @@
-package com.example.vibehabit.shared_viewmodels
+package com.example.vibehabit.features.dashboard
 
 import android.app.Application
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.vibehabit.R
 import com.example.vibehabit.core.models.Habit
 import com.example.vibehabit.core.ui.UiState
 import com.example.vibehabit.core.notifications.NotificationHelper
 import com.example.vibehabit.features.auth.AuthRepository
 import com.example.vibehabit.core.widget.HabitWidget
+import com.example.vibehabit.shared_viewmodels.HabitRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,19 +21,11 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
-class HabitsViewModel @Inject constructor(
+class DashboardViewModel @Inject constructor(
     application: Application,
     private val authRepository: AuthRepository,
-    private val habitRepository: HabitRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val habitRepository: HabitRepository
 ) : AndroidViewModel(application) {
-
-    private val _isOnboardingCompleted = MutableStateFlow<Boolean?>(null)
-    val isOnboardingCompleted: StateFlow<Boolean?> = _isOnboardingCompleted.asStateFlow()
-
-    private val defaultUser = application.getString(R.string.default_username)
-    private val _username = MutableStateFlow<String>(defaultUser)
-    val username: StateFlow<String> = _username.asStateFlow()
 
     private val _habitsState = MutableStateFlow<UiState<List<Habit>>>(UiState.Loading)
     val habitsState: StateFlow<UiState<List<Habit>>> = _habitsState.asStateFlow()
@@ -47,16 +39,6 @@ class HabitsViewModel @Inject constructor(
     private var habitsJob: Job? = null
 
     init {
-        viewModelScope.launch {
-            userPreferencesRepository.isOnboardingCompletedFlow.collect { isCompleted ->
-                _isOnboardingCompleted.value = isCompleted ?: false
-            }
-        }
-        viewModelScope.launch {
-            userPreferencesRepository.usernameFlow.collect { name ->
-                _username.value = name ?: defaultUser
-            }
-        }
         observeUserForData()
     }
 
@@ -65,9 +47,6 @@ class HabitsViewModel @Inject constructor(
             authRepository.getAuthStateFlow().collect { user ->
                 if (user != null) {
                     listenToHabits(user.uid)
-                    if (_username.value == defaultUser && user.email != null) {
-                        updateUsername(user.email!!.substringBefore("@"))
-                    }
                 } else {
                     habitsJob?.cancel()
                     _habitsState.value = UiState.Success(emptyList())
@@ -109,14 +88,6 @@ class HabitsViewModel @Inject constructor(
         _heatmapStats.value = stats
     }
 
-    fun completeOnboarding() {
-        viewModelScope.launch { userPreferencesRepository.completeOnboarding() }
-    }
-
-    fun updateUsername(newName: String) {
-        viewModelScope.launch { userPreferencesRepository.updateUsername(newName) }
-    }
-
     fun toggleHabitCompletion(habitId: String, dateStr: String = LocalDate.now().toString()) {
         val userId = authRepository.currentUser?.uid ?: return
         val habit = currentHabits.find { it.id == habitId } ?: return
@@ -143,21 +114,6 @@ class HabitsViewModel @Inject constructor(
         viewModelScope.launch {
             habitRepository.deleteHabit(userId, habitId)
             NotificationHelper.cancelHabitReminder(getApplication<Application>(), habitId.hashCode())
-        }
-    }
-
-    fun sendFeedback(message: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        val user = authRepository.currentUser
-        if (user == null) {
-            onError(getApplication<Application>().getString(R.string.error_not_authorized))
-            return
-        }
-
-        viewModelScope.launch {
-            val email = user.email ?: getApplication<Application>().getString(R.string.no_email_provided)
-            habitRepository.sendFeedback(user.uid, email, message)
-                .onSuccess { onSuccess() }
-                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_feedback_send)) }
         }
     }
 }

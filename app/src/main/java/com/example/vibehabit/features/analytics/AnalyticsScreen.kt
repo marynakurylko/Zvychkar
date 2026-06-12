@@ -23,17 +23,17 @@ import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
 import com.example.vibehabit.features.analytics.components.HeatmapChart
 import com.example.vibehabit.core.ui.UiState
+import com.example.vibehabit.features.dashboard.DashboardViewModel
 import com.example.vibehabit.shared_viewmodels.HabitsViewModel
 import kotlin.collections.emptyList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnalyticsScreen(viewModel: HabitsViewModel) {
+fun AnalyticsScreen(viewModel: DashboardViewModel) {
     val habitsState by viewModel.habitsState.collectAsState()
     val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
     val heatmapData by viewModel.heatmapStats.collectAsState()
 
-    // Рахуємо статистику
     val totalCompletedTasks = habits.sumOf { it.completedDates.size }
     val bestGlobalStreak = habits.maxOfOrNull { it.bestStreak } ?: 0
 
@@ -54,7 +54,6 @@ fun AnalyticsScreen(viewModel: HabitsViewModel) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Блок зі швидкими фактами
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -64,18 +63,17 @@ fun AnalyticsScreen(viewModel: HabitsViewModel) {
                     title = stringResource(R.string.stat_total_completed),
                     value = totalCompletedTasks.toString(),
                     icon = Icons.Filled.CheckCircle,
-                    color = Color(0xFF00FF7F) // Неоновий зелений
+                    color = Color(0xFF00FF7F)
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
                     title = stringResource(R.string.stat_max_streak),
                     value = stringResource(R.string.streak_format, bestGlobalStreak),
                     icon = Icons.Filled.LocalFireDepartment,
-                    color = Color(0xFFFF9800) // Помаранчевий
+                    color = Color(0xFFFF9800)
                 )
             }
 
-            // Наш Heatmap
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = stringResource(R.string.activity_history),
@@ -89,7 +87,6 @@ fun AnalyticsScreen(viewModel: HabitsViewModel) {
     }
 }
 
-// Допоміжний компонент для красивих карток зі статистикою
 @Composable
 fun StatCard(modifier: Modifier = Modifier, title: String, value: String, icon: ImageVector, color: Color) {
     Column(

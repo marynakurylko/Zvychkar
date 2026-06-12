@@ -9,7 +9,7 @@ class SaveHabitUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         userId: String,
-        habitId: Int,
+        habitId: String,
         name: String,
         colorHex: String,
         iconName: String,

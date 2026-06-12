@@ -37,7 +37,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalDate
 
-val HABIT_ID_KEY = ActionParameters.Key<Int>("habit_id")
+val HABIT_ID_KEY = ActionParameters.Key<String>("habit_id")
 
 class HabitWidget : GlanceAppWidget() {
 
@@ -54,7 +54,24 @@ class HabitWidget : GlanceAppWidget() {
                         .collection("habits")
                         .addSnapshotListener { snapshot, _ ->
                             if (snapshot != null) {
-                                habits = snapshot.documents.mapNotNull { it.toObject(Habit::class.java) }.sortedBy { it.id }
+                                habits = snapshot.documents.mapNotNull { doc ->
+                                    try {
+                                        doc.toObject(Habit::class.java)?.copy(id = doc.id)
+                                    } catch (e: Exception) {
+                                        val data = doc.data ?: return@mapNotNull null
+                                        Habit(
+                                            id = doc.id,
+                                            name = data["name"]?.toString() ?: "",
+                                            isFavorite = data["isFavorite"] as? Boolean ?: false,
+                                            colorHex = data["colorHex"]?.toString() ?: "",
+                                            completedDates = (data["completedDates"] as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList(),
+                                            targetDays = (data["targetDays"] as? Number)?.toInt() ?: 7,
+                                            iconName = data["iconName"]?.toString() ?: "Bolt",
+                                            frequency = data["frequency"]?.toString() ?: "Daily",
+                                            reminderTime = data["reminderTime"]?.toString()
+                                        )
+                                    }
+                                }.sortedBy { it.id }
                             }
                         }
                 } else {
@@ -140,11 +157,26 @@ class ToggleHabitAction : ActionCallback {
         val firestore = FirebaseFirestore.getInstance()
 
         val docRef = firestore.collection("users").document(currentUser.uid)
-            .collection("habits").document(habitId.toString())
+            .collection("habits").document(habitId)
 
         try {
             val docSnapshot = Tasks.await(docRef.get())
-            val habit = docSnapshot.toObject(Habit::class.java) ?: return
+            val habit = try {
+                docSnapshot.toObject(Habit::class.java)?.copy(id = docSnapshot.id)
+            } catch (e: Exception) {
+                val data = docSnapshot.data ?: return
+                Habit(
+                    id = docSnapshot.id,
+                    name = data["name"]?.toString() ?: "",
+                    isFavorite = data["isFavorite"] as? Boolean ?: false,
+                    colorHex = data["colorHex"]?.toString() ?: "",
+                    completedDates = (data["completedDates"] as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList(),
+                    targetDays = (data["targetDays"] as? Number)?.toInt() ?: 7,
+                    iconName = data["iconName"]?.toString() ?: "Bolt",
+                    frequency = data["frequency"]?.toString() ?: "Daily",
+                    reminderTime = data["reminderTime"]?.toString()
+                )
+            } ?: return
 
             val newDates = habit.completedDates.toMutableList()
             if (newDates.contains(todayStr)) newDates.remove(todayStr) else newDates.add(todayStr)

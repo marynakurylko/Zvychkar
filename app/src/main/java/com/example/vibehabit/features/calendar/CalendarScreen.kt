@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
 import com.example.vibehabit.core.ui.UiState
+import com.example.vibehabit.features.dashboard.DashboardViewModel
 import com.example.vibehabit.shared_viewmodels.HabitsViewModel
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -27,7 +28,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CalendarScreen(viewModel: HabitsViewModel) {
+fun CalendarScreen(viewModel: DashboardViewModel) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val habitsState by viewModel.habitsState.collectAsState()
     val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
@@ -70,8 +71,6 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                     items(dates) { date ->
                         val isSelected = date == selectedDate
                         val isToday = date == LocalDate.now()
-                        
-                        // Використовуємо системну мову для назв днів
                         val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
 
                         Column(
@@ -114,7 +113,7 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val onToggleCompletion: (Int, String) -> Unit = remember(viewModel) {
+            val onToggleCompletion: (String, String) -> Unit = remember(viewModel) {
                 { habitId, dateStr -> viewModel.toggleHabitCompletion(habitId, dateStr) }
             }
 
@@ -142,7 +141,6 @@ fun CalendarScreen(viewModel: HabitsViewModel) {
                         val isCompletedOnSelectedDate = habit.completedDates.contains(selectedDate.toString())
                         val habitColor = runCatching { Color(android.graphics.Color.parseColor(habit.colorHex)) }
                             .getOrDefault(MaterialTheme.colorScheme.surface)
-
                         val isPastOrToday = !selectedDate.isAfter(LocalDate.now())
 
                         Row(

@@ -10,13 +10,16 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 val Context.settingsDataStore by preferencesDataStore(name = "settings_prefs")
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class SettingsViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
     private val dataStore = application.settingsDataStore
 
     private val DARK_THEME_KEY = booleanPreferencesKey("dark_theme")

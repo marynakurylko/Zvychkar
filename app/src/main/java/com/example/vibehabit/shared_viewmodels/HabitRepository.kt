@@ -14,9 +14,7 @@ import javax.inject.Singleton
 class HabitRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
-    // МАГІЯ 2: Перетворюємо Firestore SnapshotListener на Flow
     fun getHabitsFlow(userId: String): Flow<List<Habit>> = callbackFlow {
-        // 1. Екстра-захист від порожнього userId
         if (userId.isBlank()) {
             close(Exception("Користувач не авторизований"))
             return@callbackFlow
@@ -32,7 +30,25 @@ class HabitRepository @Inject constructor(
                 }
 
                 if (snapshot != null) {
-                    val habits = snapshot.toObjects(Habit::class.java)
+                    val habits = snapshot.documents.mapNotNull { doc ->
+                        // Надійне ручне мапування, щоб уникнути Crash при невідповідності типів у Firestore
+                        val data = doc.data ?: return@mapNotNull null
+                        try {
+                            Habit(
+                                id = doc.id, // Завжди використовуємо ID документа як String
+                                name = data["name"]?.toString() ?: "",
+                                isFavorite = data["isFavorite"] as? Boolean ?: false,
+                                colorHex = data["colorHex"]?.toString() ?: "",
+                                completedDates = (data["completedDates"] as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList(),
+                                targetDays = (data["targetDays"] as? Number)?.toInt() ?: 7,
+                                iconName = data["iconName"]?.toString() ?: "Bolt",
+                                frequency = data["frequency"]?.toString() ?: "Daily",
+                                reminderTime = data["reminderTime"]?.toString()
+                            )
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
                     trySend(habits)
                 }
             }
@@ -40,27 +56,26 @@ class HabitRepository @Inject constructor(
         awaitClose { subscription.remove() }
     }
 
-    suspend fun updateHabitDates(userId: String, habitId: Int, newDates: List<String>): Result<Unit> = runCatching {
-        firestore.collection("users").document(userId).collection("habits").document(habitId.toString())
+    suspend fun updateHabitDates(userId: String, habitId: String, newDates: List<String>): Result<Unit> = runCatching {
+        firestore.collection("users").document(userId).collection("habits").document(habitId)
             .update("completedDates", newDates).await()
     }
 
-    suspend fun updateHabitFavorite(userId: String, habitId: Int, isFavorite: Boolean): Result<Unit> = runCatching {
-        firestore.collection("users").document(userId).collection("habits").document(habitId.toString())
+    suspend fun updateHabitFavorite(userId: String, habitId: String, isFavorite: Boolean): Result<Unit> = runCatching {
+        firestore.collection("users").document(userId).collection("habits").document(habitId)
             .update("isFavorite", isFavorite).await()
     }
 
     suspend fun saveHabit(userId: String, habit: Habit): Result<Unit> = runCatching {
-        firestore.collection("users").document(userId).collection("habits").document(habit.id.toString())
+        firestore.collection("users").document(userId).collection("habits").document(habit.id)
             .set(habit).await()
     }
 
-    suspend fun deleteHabit(userId: String, habitId: Int): Result<Unit> = runCatching {
-        firestore.collection("users").document(userId).collection("habits").document(habitId.toString())
+    suspend fun deleteHabit(userId: String, habitId: String): Result<Unit> = runCatching {
+        firestore.collection("users").document(userId).collection("habits").document(habitId)
             .delete().await()
     }
 
-    // Для видалення акаунту
     suspend fun deleteAllUserData(userId: String): Result<Unit> = runCatching {
         val habitsRef = firestore.collection("users").document(userId).collection("habits")
         val snapshot = habitsRef.get().await()

@@ -28,9 +28,10 @@ import com.example.vibehabit.features.create_habit.CreateHabitScreen
 import com.example.vibehabit.features.calendar.CalendarScreen
 import com.example.vibehabit.features.analytics.AnalyticsScreen
 import com.example.vibehabit.features.auth.AuthViewModel
+import com.example.vibehabit.features.dashboard.DashboardViewModel
 import com.example.vibehabit.features.settings.SettingsScreen
 import com.example.vibehabit.features.habit_details.HabitDetailsScreen
-import com.example.vibehabit.shared_viewmodels.HabitsViewModel
+import com.example.vibehabit.features.settings.ProfileViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable object SignInRoute
@@ -40,8 +41,8 @@ import kotlinx.serialization.Serializable
 @Serializable object CalendarRoute
 @Serializable object AnalyticsRoute
 @Serializable object SettingsRoute
-@Serializable data class EditHabitRoute(val habitId: Int)
-@Serializable data class HabitDetailsRoute(val habitId: Int)
+@Serializable data class EditHabitRoute(val habitId: String)
+@Serializable data class HabitDetailsRoute(val habitId: String)
 
 @Composable
 fun AppNavigation(
@@ -49,13 +50,16 @@ fun AppNavigation(
     onThemeChange: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
-    val viewModel: HabitsViewModel = hiltViewModel()
+
+    // НАШІ ТРИ НЕЗАЛЕЖНІ VIEWMODELS ЗАМІСТЬ ОДНІЄЇ
+    val dashboardViewModel: DashboardViewModel = hiltViewModel()
     val authViewModel: AuthViewModel = hiltViewModel()
+    val profileViewModel: ProfileViewModel = hiltViewModel()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val destination = navBackStackEntry?.destination
 
-    val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
+    val isOnboardingCompleted by profileViewModel.isOnboardingCompleted.collectAsState()
     val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -165,7 +169,7 @@ fun AppNavigation(
             composable<OnboardingRoute> {
                 OnboardingScreen(
                     onFinish = {
-                        viewModel.completeOnboarding()
+                        profileViewModel.completeOnboarding()
                         navController.navigate(DashboardRoute) {
                             popUpTo(OnboardingRoute) { inclusive = true }
                         }
@@ -175,7 +179,9 @@ fun AppNavigation(
 
             composable<DashboardRoute> {
                 DashboardScreen(
-                    viewModel = viewModel,
+                    viewModel = dashboardViewModel,
+                    authViewModel = authViewModel,
+                    profileViewModel = profileViewModel,
                     onAddHabitClick = { navController.navigate(CreateHabitRoute) },
                     onHabitClick = { habitId -> navController.navigate(HabitDetailsRoute(habitId)) }
                 )
@@ -189,25 +195,27 @@ fun AppNavigation(
             }
 
             composable<CalendarRoute> {
-                CalendarScreen(viewModel = viewModel)
+                CalendarScreen(viewModel = dashboardViewModel)
             }
 
             composable<AnalyticsRoute> {
-                AnalyticsScreen(viewModel = viewModel)
+                AnalyticsScreen(viewModel = dashboardViewModel)
             }
 
             composable<SettingsRoute> {
                 SettingsScreen(
                     isDarkTheme = isDarkTheme,
                     onThemeChange = onThemeChange,
-                    habitsViewModel = viewModel
+                    dashboardViewModel = dashboardViewModel,
+                    authViewModel = authViewModel,
+                    profileViewModel = profileViewModel
                 )
             }
 
             composable<EditHabitRoute> { backStackEntry ->
                 val args = backStackEntry.toRoute<EditHabitRoute>()
 
-                val habitsState by viewModel.habitsState.collectAsState()
+                val habitsState by dashboardViewModel.habitsState.collectAsState()
                 val habits = (habitsState as? UiState.Success)?.data ?: emptyList()
                 val habit = habits.find { it.id == args.habitId }
 
@@ -224,7 +232,7 @@ fun AppNavigation(
 
                 HabitDetailsScreen(
                     habitId = args.habitId,
-                    viewModel = viewModel,
+                    viewModel = dashboardViewModel,
                     onBackClick = { navController.popBackStack() },
                     onEditClick = { navController.navigate(EditHabitRoute(args.habitId)) }
                 )
