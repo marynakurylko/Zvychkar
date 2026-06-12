@@ -1,6 +1,7 @@
 package com.example.vibehabit.features.analytics
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,7 +41,7 @@ fun AnalyticsScreen(viewModel: DashboardViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.analytics_title), fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Text(text = stringResource(R.string.analytics_title), fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1, modifier = Modifier.basicMarquee()) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },

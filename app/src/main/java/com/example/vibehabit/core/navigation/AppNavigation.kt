@@ -1,5 +1,6 @@
 package com.example.vibehabit.core.navigation
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -90,7 +91,7 @@ fun AppNavigation(
                 ) {
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.Home, contentDescription = stringResource(R.string.nav_home_desc)) },
-                        label = { Text(stringResource(R.string.nav_habits_label)) },
+                        label = { Text(text = stringResource(R.string.nav_habits_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
                         selected = destination.hasRoute<DashboardRoute>(),
                         onClick = {
                             if (!destination.hasRoute<DashboardRoute>()) {
@@ -107,7 +108,7 @@ fun AppNavigation(
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.nav_calendar_desc)) },
-                        label = { Text(stringResource(R.string.nav_calendar_label)) },
+                        label = { Text(text = stringResource(R.string.nav_calendar_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
                         selected = destination.hasRoute<CalendarRoute>(),
                         onClick = {
                             if (!destination.hasRoute<CalendarRoute>()) navController.navigate(CalendarRoute)
@@ -120,7 +121,7 @@ fun AppNavigation(
 
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.PieChart, contentDescription = stringResource(R.string.nav_analytics_desc)) },
-                        label = { Text(stringResource(R.string.nav_analytics_label)) },
+                        label = { Text(text = stringResource(R.string.nav_analytics_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
                         selected = destination.hasRoute<AnalyticsRoute>(),
                         onClick = {
                             if (!destination.hasRoute<AnalyticsRoute>()) navController.navigate(AnalyticsRoute)
@@ -133,7 +134,7 @@ fun AppNavigation(
 
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.nav_settings_desc)) },
-                        label = { Text(stringResource(R.string.nav_settings_label)) },
+                        label = { Text(text = stringResource(R.string.nav_settings_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
                         selected = destination.hasRoute<SettingsRoute>(),
                         onClick = {
                             if (!destination.hasRoute<SettingsRoute>()) navController.navigate(SettingsRoute)

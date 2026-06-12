@@ -2,6 +2,7 @@ package com.example.vibehabit.features.dashboard.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -123,7 +124,6 @@ fun HabitCard(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        // ВИКОРИСТОВУЄМО КОНСТАНТИ
                         Icon(
                             imageVector = HabitConstants.HabitIcon.getByName(habit.iconName),
                             contentDescription = habit.name,
@@ -140,7 +140,9 @@ fun HabitCard(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
-                            textDecoration = textDecoration
+                            textDecoration = textDecoration,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee()
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically) {

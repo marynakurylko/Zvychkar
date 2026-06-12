@@ -1,6 +1,7 @@
 package com.example.vibehabit.features.calendar
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,7 +42,7 @@ fun CalendarScreen(viewModel: DashboardViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.calendar_title), fontWeight = FontWeight.Bold) },
+                title = { Text(text = stringResource(R.string.calendar_title), fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.basicMarquee()) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
@@ -165,7 +166,9 @@ fun CalendarScreen(viewModel: DashboardViewModel) {
                                 text = habit.name,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                modifier = Modifier.weight(1f).basicMarquee().padding(end = 8.dp)
                             )
 
                             if (isCompletedOnSelectedDate) {

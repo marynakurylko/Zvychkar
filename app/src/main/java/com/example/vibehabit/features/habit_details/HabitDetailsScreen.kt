@@ -1,5 +1,6 @@
 package com.example.vibehabit.features.habit_details
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -48,7 +49,7 @@ fun HabitDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.stats_title), fontWeight = FontWeight.Bold) },
+                title = { Text(text = stringResource(R.string.stats_title), fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.basicMarquee()) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -94,7 +95,9 @@ fun HabitDetailsScreen(
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = Modifier.basicMarquee()
             )
 
             val displayFrequency = when (habit.frequency) {

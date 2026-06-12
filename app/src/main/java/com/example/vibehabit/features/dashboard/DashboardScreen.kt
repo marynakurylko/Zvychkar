@@ -1,6 +1,7 @@
 package com.example.vibehabit.features.dashboard
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -134,7 +135,9 @@ fun DashboardScreen(
                         text = stringResource(R.string.dashboard_greeting, username ?: ""),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 22.sp
+                        fontSize = 22.sp,
+                        maxLines = 1,
+                        modifier = Modifier.basicMarquee()
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

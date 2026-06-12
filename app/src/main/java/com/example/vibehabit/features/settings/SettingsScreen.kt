@@ -1,6 +1,7 @@
 package com.example.vibehabit.features.settings
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -70,7 +71,9 @@ fun SettingsScreen(
                     Text(
                         text = stringResource(R.string.settings_title),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
+                        fontSize = 20.sp,
+                        maxLines = 1,
+                        modifier = Modifier.basicMarquee()
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -151,7 +154,6 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Sign Out
             Button(
                 onClick = { showLogoutDialog = true },
                 modifier = Modifier
