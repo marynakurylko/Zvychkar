@@ -101,6 +101,8 @@
     <string name="delete_account_desc">Ви впевнені, що хочете видалити акаунт? Усі ваші створені звички, налаштування та історія стріків у хмарі будуть знищені назавжди без можливості відновлення.</string>
     <string name="confirm_delete_account">Так, видалити назавжди</string>
     <string name="error_title">⚠️ Щось пішло не так</string>
+    <string name="error_oops">Халепа!</string>
+    <string name="app_version">Версія %1$s</string>
     <string name="ok_button">Зрозуміло</string>
     <string name="feedback_title">Зворотний зв\'язок 💜</string>
     <string name="feedback_desc">Знайшли баг чи маєте ідею? Напишіть нам, і ми зробимо застосунок ще кращим!</string>
@@ -166,6 +168,10 @@
     <string name="error_sign_in">Помилка входу</string>
     <string name="error_not_authorized">Користувач не авторизований</string>
     <string name="error_feedback_send">Не вдалося відправити відгук. Спробуйте пізніше.</string>
+    <string name="error_unknown">Невідома помилка</string>
+    <string name="error_load_habits_failed">Не вдалося завантажити звички</string>
+    <string name="error_empty_habit_name">Назва звички не може бути порожньою</string>
+    <string name="error_invalid_target_days">Цільова кількість днів має бути більшою за 0</string>
 
     <string name="no_email_provided">Email не було вказано</string>
 

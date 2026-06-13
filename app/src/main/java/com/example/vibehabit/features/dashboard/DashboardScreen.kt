@@ -303,7 +303,7 @@ fun DashboardScreen(
                             ) {
                                 Text("⚠️", fontSize = 48.sp, modifier = Modifier.padding(bottom = 16.dp))
                                 Text(
-                                    text = "Халепа!",
+                                    text = stringResource(R.string.error_oops),
                                     fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error
                                 )
                                 Text(

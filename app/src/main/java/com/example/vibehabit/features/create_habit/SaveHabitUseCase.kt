@@ -1,10 +1,14 @@
 package com.example.vibehabit.features.create_habit
 
+import android.content.Context
+import com.example.vibehabit.R
 import com.example.vibehabit.core.models.Habit
 import com.example.vibehabit.shared_viewmodels.HabitRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class SaveHabitUseCase @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val habitRepository: HabitRepository
 ) {
     suspend operator fun invoke(
@@ -21,14 +25,11 @@ class SaveHabitUseCase @Inject constructor(
     ): Result<Unit> {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) {
-            return Result.failure(Exception("Назва звички не може бути порожньою"))
+            return Result.failure(Exception(context.getString(R.string.error_empty_habit_name)))
         }
         if (targetDays <= 0) {
-            return Result.failure(Exception("Цільова кількість днів має бути більшою за 0"))
+            return Result.failure(Exception(context.getString(R.string.error_invalid_target_days)))
         }
-
-        // Тут ти можеш додати будь-яку складну логіку форматування "frequency",
-        // щоб на екрані CreateHabitScreen не було "брудного" коду.
 
         val habitToSave = Habit(
             id = habitId,

@@ -85,7 +85,7 @@ class HabitsViewModel @Inject constructor(
             habitRepository.getHabitsFlow(userId)
                 .catch { exception ->
                     _habitsState.value = UiState.Error(
-                        exception.localizedMessage ?: "Не вдалося завантажити звички"
+                        exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_load_habits_failed)
                     )
                 }
                 .collect { habitsList ->

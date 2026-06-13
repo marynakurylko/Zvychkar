@@ -85,7 +85,7 @@ fun HabitDetailsScreen(
             NeonProgressRing(
                 progress = progress,
                 color = headerColor,
-                centerText = "$totalCompleted / ${habit.targetDays}",
+                centerText = stringResource(R.string.progress_format, totalCompleted, habit.targetDays),
                 subtitle = stringResource(R.string.status_completed),
                 modifier = Modifier.padding(vertical = 32.dp)
             )

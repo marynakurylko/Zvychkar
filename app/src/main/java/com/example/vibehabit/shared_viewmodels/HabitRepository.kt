@@ -1,8 +1,11 @@
 package com.example.vibehabit.shared_viewmodels
 
+import android.content.Context
+import com.example.vibehabit.R
 import com.example.vibehabit.core.models.Habit
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -12,11 +15,12 @@ import javax.inject.Singleton
 
 @Singleton
 class HabitRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val firestore: FirebaseFirestore
 ) {
     fun getHabitsFlow(userId: String): Flow<List<Habit>> = callbackFlow {
         if (userId.isBlank()) {
-            close(Exception("Користувач не авторизований"))
+            close(Exception(context.getString(R.string.error_not_authorized)))
             return@callbackFlow
         }
 

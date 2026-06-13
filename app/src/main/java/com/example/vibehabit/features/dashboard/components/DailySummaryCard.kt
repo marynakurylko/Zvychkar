@@ -74,7 +74,7 @@ fun DailySummaryCard(
                 }
 
                 Text(
-                    text = "$completedCount / $totalCount",
+                    text = stringResource(R.string.progress_format, completedCount, totalCount),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = accentColor

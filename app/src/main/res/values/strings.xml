@@ -102,6 +102,8 @@
     <string name="delete_account_desc">Are you sure you want to delete your account? All your created habits, settings, and streak history in the cloud will be destroyed forever without the possibility of recovery.</string>
     <string name="confirm_delete_account">Yes, delete forever</string>
     <string name="error_title">⚠️ Something went wrong</string>
+    <string name="error_oops">Oops!</string>
+    <string name="app_version">Version %1$s</string>
     <string name="ok_button">Got it</string>
     <string name="feedback_title">Feedback 💜</string>
     <string name="feedback_desc">Found a bug or have an idea? Write to us, and we will make the app even better!</string>
@@ -153,6 +155,7 @@
     <string name="calendar_empty_state">It\'s empty for now, but it\'s easy to fix by adding a new habit! ✨</string>
     <string name="current_streak">Current streak</string>
     <string name="best_streak">Best streak</string>
+    <string name="progress_format">%1$d / %2$d</string>
 
     <!-- ViewModel Strings -->
     <string name="default_username">User</string>
@@ -167,6 +170,10 @@
     <string name="error_sign_in">Sign-in error</string>
     <string name="error_not_authorized">User not authorized</string>
     <string name="error_feedback_send">Failed to send feedback. Try again later.</string>
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_load_habits_failed">Failed to load habits</string>
+    <string name="error_empty_habit_name">Habit name cannot be empty</string>
+    <string name="error_invalid_target_days">Target days must be greater than 0</string>
     <string name="no_email_provided">No email provided</string>
 
     <!-- Widget -->

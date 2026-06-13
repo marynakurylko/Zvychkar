@@ -138,7 +138,7 @@ class CreateHabitViewModel @Inject constructor(
                 _uiEvent.emit(UiEvent.Success)
             }.onFailure { error ->
                 _uiState.update { it.copy(isSaving = false) }
-                _uiEvent.emit(UiEvent.ErrorText(error.localizedMessage ?: "Error"))
+                _uiEvent.emit(UiEvent.ErrorText(error.localizedMessage ?: context.getString(R.string.error_unknown)))
             }
         }
     }

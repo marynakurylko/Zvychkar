@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import com.example.vibehabit.R
 import kotlinx.coroutines.launch
 
-// Дані для кожної сторінки
 data class OnboardingPage(
     val title: String,
     val description: String,

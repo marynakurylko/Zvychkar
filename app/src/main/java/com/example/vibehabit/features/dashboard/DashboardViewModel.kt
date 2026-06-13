@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.vibehabit.R
 import com.example.vibehabit.core.models.Habit
 import com.example.vibehabit.core.ui.UiState
 import com.example.vibehabit.core.notifications.NotificationHelper
@@ -64,7 +65,7 @@ class DashboardViewModel @Inject constructor(
             habitRepository.getHabitsFlow(userId)
                 .catch { exception ->
                     _habitsState.value = UiState.Error(
-                        exception.localizedMessage ?: "Не вдалося завантажити звички"
+                        exception.localizedMessage ?: getApplication<Application>().getString(R.string.error_load_habits_failed)
                     )
                 }
                 .collect { habitsList ->
