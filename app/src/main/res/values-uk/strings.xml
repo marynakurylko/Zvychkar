@@ -52,7 +52,6 @@
 
     <string name="stepper_decrease">Зменшити</string>
     <string name="stepper_increase">Збільшити</string>
-    <string name="hello_android">Привіт, %1$s!</string>
 
     <!-- Notifications -->
     <string name="notification_channel_name">Нагадування про звички</string>
@@ -93,7 +92,6 @@
 
     <!-- Settings & Profile -->
     <string name="leave_feedback">Залишити відгук</string>
-    <string name="feedback_desc_short">Відгук</string>
     <string name="sign_out">Вийти з акаунта</string>
     <string name="delete_account">Видалити акаунт назавжди</string>
     <string name="sign_out_title">Вихід з акаунта</string>
@@ -168,12 +166,10 @@
     <string name="error_sign_in">Помилка входу</string>
     <string name="error_not_authorized">Користувач не авторизований</string>
     <string name="error_feedback_send">Не вдалося відправити відгук. Спробуйте пізніше.</string>
-    <string name="error_updating_habit">Помилка оновлення звички</string>
 
     <string name="no_email_provided">Email не було вказано</string>
 
     <!-- Widget -->
     <string name="widget_login_prompt">Будь ласка, увійдіть в додаток</string>
     <string name="widget_empty_state">Жодних планів на сьогодні!</string>
-    <string name="error_saving_habit">Помилка збереження звички</string>
 </resources>

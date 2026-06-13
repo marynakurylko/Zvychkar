@@ -53,7 +53,6 @@
 
     <string name="stepper_decrease">Decrease</string>
     <string name="stepper_increase">Increase</string>
-    <string name="hello_android">Hello %1$s!</string>
 
     <!-- Notifications -->
     <string name="notification_channel_name">Habit Reminders</string>
@@ -94,7 +93,6 @@
 
     <!-- Settings & Profile -->
     <string name="leave_feedback">Leave feedback</string>
-    <string name="feedback_desc_short">Feedback</string>
     <string name="sign_out">Sign out</string>
     <string name="delete_account">Delete account permanently</string>
     <string name="sign_out_title">Sign out</string>
@@ -174,6 +172,4 @@
     <!-- Widget -->
     <string name="widget_login_prompt">Please log in to the app</string>
     <string name="widget_empty_state">No plans for today!</string>
-    <string name="error_saving_habit">Error save habit</string>
-    <string name="error_updating_habit">Помилка оновлення звички</string>
 </resources>
