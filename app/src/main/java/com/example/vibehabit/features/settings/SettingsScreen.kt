@@ -20,13 +20,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import com.example.vibehabit.features.settings.components.ProfileBlock
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.vibehabit.features.auth.AuthViewModel
 import com.example.vibehabit.features.dashboard.DashboardViewModel
+import com.example.vibehabit.core.utils.AppConstants
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +42,8 @@ fun SettingsScreen(
     profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
+
     val currentLanguage by settingsViewModel.language.collectAsState(initial = "en")
     val selectedLanguageIndex = if (currentLanguage == "uk") 1 else 0
 
@@ -49,8 +54,9 @@ fun SettingsScreen(
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
     var authErrorMessage by remember { mutableStateOf<String?>(null) }
-    var deletionErrorByFirebase by remember { mutableStateOf<String?>(null) }
+    var deletionError by remember { mutableStateOf<String?>(null) }
 
     var showFeedbackDialog by remember { mutableStateOf(false) }
     var feedbackText by remember { mutableStateOf("") }
@@ -75,6 +81,15 @@ fun SettingsScreen(
                         maxLines = 1,
                         modifier = Modifier.basicMarquee()
                     )
+                },
+                actions = {
+                    IconButton(onClick = { showAboutDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = stringResource(R.string.about_app_title),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
@@ -190,6 +205,54 @@ fun SettingsScreen(
             }
         }
 
+        // About
+        if (showAboutDialog) {
+            AlertDialog(
+                onDismissRequest = { showAboutDialog = false },
+                title = {
+                    Text(stringResource(R.string.about_app_title), fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(AppConstants.APP_NAME, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text("Version 1.0.0", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        OutlinedButton(
+                            onClick = { uriHandler.openUri("https://docs.google.com/document/d/1w8yoFZIXWyQD6dbl_l5vyZVtg5GiDRxTke8PuyP76Bo/edit?usp=sharing") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Text(stringResource(R.string.privacy_policy), color = MaterialTheme.colorScheme.onBackground)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = { uriHandler.openUri("https://docs.google.com/document/d/1pUGQhJPctMYZ1PHh1znBgcj3lLu2MLaeELSZ3T3O0J8/edit?usp=sharing") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Text(stringResource(R.string.terms_of_service), color = MaterialTheme.colorScheme.onBackground)
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showAboutDialog = false }) {
+                        Text(stringResource(R.string.ok_button), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+
         if (showLogoutDialog) {
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
@@ -232,13 +295,13 @@ fun SettingsScreen(
                     TextButton(
                         onClick = {
                             showDeleteDialog = false
-                            deletionErrorByFirebase = null
+                            deletionError = null
                             authViewModel.deleteAccount(
                                 onSuccess = {
                                     authViewModel.signOut()
                                 },
                                 onError = { errorText ->
-                                    deletionErrorByFirebase = errorText
+                                    deletionError = errorText
                                 }
                             )
                         }
@@ -256,17 +319,17 @@ fun SettingsScreen(
             )
         }
 
-        if (deletionErrorByFirebase != null) {
+        if (deletionError != null) {
             AlertDialog(
-                onDismissRequest = { deletionErrorByFirebase = null },
+                onDismissRequest = { deletionError = null },
                 title = {
                     Text(stringResource(R.string.error_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                 },
                 text = {
-                    Text(deletionErrorByFirebase!!)
+                    Text(deletionError!!)
                 },
                 confirmButton = {
-                    TextButton(onClick = { deletionErrorByFirebase = null }) {
+                    TextButton(onClick = { deletionError = null }) {
                         Text(stringResource(R.string.ok_button), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 },
@@ -319,7 +382,7 @@ fun SettingsScreen(
                                     },
                                     onError = { error ->
                                         isFeedbackSubmitting = false
-                                        deletionErrorByFirebase = error
+                                        deletionError = error
                                     }
                                 )
                             }

@@ -32,6 +32,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.text.TextDecoration
 import com.example.vibehabit.core.models.Habit
 import com.example.vibehabit.R
+import com.example.vibehabit.core.utils.AppConstants
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -86,7 +87,7 @@ class HabitWidget : GlanceAppWidget() {
                     .padding(16.dp)
             ) {
                 Text(
-                    text = context.getString(R.string.notification_title),
+                    text = AppConstants.APP_NAME,
                     style = TextStyle(
                         color = ColorProvider(day = Color.White, night = Color.White),
                         fontSize = 16.sp,
