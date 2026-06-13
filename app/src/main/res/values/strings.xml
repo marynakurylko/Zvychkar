@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VibeHabit</string>
+    <string name="app_name">Zvychkar</string>
     <string name="settings_title">Settings</string>
     <string name="language_english">English</string>
     <string name="language_ukrainian">Українська</string>
@@ -58,7 +58,7 @@
     <string name="notification_channel_name">Habit Reminders</string>
     <string name="notification_channel_description">Channel for habit reminders</string>
     <string name="notification_default_content">Time for your habit!</string>
-    <string name="notification_title">VibeHabit 🚀</string>
+    <string name="notification_title">Zvychkar 🚀</string>
     <string name="notification_content_prefix">Reminder: %1$s</string>
     <string name="reminders_enable_label">Enable reminders</string>
     <string name="reminders_enable_desc">Receive push notifications</string>
@@ -113,7 +113,7 @@
     <string name="cancel_button">Cancel</string>
 
     <!-- Auth -->
-    <string name="app_name_logo">VibeHabit 🚀</string>
+    <string name="app_name_logo">Zvychkar 🚀</string>
     <string name="welcome_back">Welcome back!</string>
     <string name="create_account">Create a new account</string>
     <string name="email_label">Email</string>
@@ -172,4 +172,8 @@
     <!-- Widget -->
     <string name="widget_login_prompt">Please log in to the app</string>
     <string name="widget_empty_state">No plans for today!</string>
+
+    <string name="about_app_title">About App</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_of_service">Terms and Conditions</string>
 </resources>

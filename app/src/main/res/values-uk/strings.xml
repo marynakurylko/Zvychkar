@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VibeHabit</string>
+    <string name="app_name">Zvychkar</string>
     <string name="settings_title">Налаштування</string>
     <string name="language_english">English</string>
     <string name="language_ukrainian">Українська</string>
@@ -57,7 +57,7 @@
     <string name="notification_channel_name">Нагадування про звички</string>
     <string name="notification_channel_description">Канал для нагадувань про ваші звички</string>
     <string name="notification_default_content">Час для вашої звички!</string>
-    <string name="notification_title">VibeHabit 🚀</string>
+    <string name="notification_title">Zvychkar 🚀</string>
     <string name="notification_content_prefix">Нагадування: %1$s</string>
     <string name="reminders_enable_label">Увімкнути нагадування</string>
     <string name="reminders_enable_desc">Отримувати пуш-сповіщення</string>
@@ -83,7 +83,7 @@
     <string name="resend_cooldown">Зачекайте %1$d с</string>
     <string name="resend_email">Надіслати ще раз</string>
     <string name="checking_label">Перевіряємо...</string>
-    <string name="email_not_verified">Пошта ще не підтверджена. Перевірте папку Спам.</string>
+    <string name="email_not_verified">Пошта ще не підтвержена. Перевірте папку Спам.</string>
     <string name="i_confirmed">Я підтвердив(ла)</string>
     <string name="empty_habits_title">Твій шлях починається тут!</string>
     <string name="empty_habits_desc">Додай свою першу звичку та почни формувати новий вайб.</string>
@@ -112,7 +112,7 @@
     <string name="cancel_button">Скасувати</string>
 
     <!-- Auth -->
-    <string name="app_name_logo">VibeHabit 🚀</string>
+    <string name="app_name_logo">Zvychkar 🚀</string>
     <string name="welcome_back">З поверненням!</string>
     <string name="create_account">Створити новий акаунт</string>
     <string name="email_label">Email</string>
@@ -172,4 +172,8 @@
     <!-- Widget -->
     <string name="widget_login_prompt">Будь ласка, увійдіть в додаток</string>
     <string name="widget_empty_state">Жодних планів на сьогодні!</string>
+
+    <string name="about_app_title">Про програму</string>
+    <string name="privacy_policy">Політика конфіденційності</string>
+    <string name="terms_of_service">Правила та умови</string>
 </resources>

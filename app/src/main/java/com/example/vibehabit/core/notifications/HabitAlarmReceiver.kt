@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.example.vibehabit.R
+import com.example.vibehabit.core.utils.AppConstants
 
 class HabitAlarmReceiver : BroadcastReceiver() {
 
@@ -18,7 +19,7 @@ class HabitAlarmReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, "habit_channel")
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
-            .setContentTitle(context.getString(R.string.notification_title))
+            .setContentTitle(AppConstants.APP_NAME)
             .setContentText(context.getString(R.string.notification_content_prefix, habitName))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
