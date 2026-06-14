@@ -90,7 +90,7 @@ fun NeonProgressRing(
                 text = centerText,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onSurface,
             )
             if (subtitle.isNotEmpty()) {
                 Text(

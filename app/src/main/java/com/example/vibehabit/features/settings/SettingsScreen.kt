@@ -2,6 +2,7 @@ package com.example.vibehabit.features.settings
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import com.example.vibehabit.features.settings.components.ProfileBlock
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.vibehabit.features.auth.AuthViewModel
@@ -92,7 +94,7 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = Color.Transparent
                 )
             )
         },
@@ -217,6 +219,8 @@ fun SettingsScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Text(AppConstants.APP_NAME, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         Text(stringResource(R.string.app_version, "1.0.0"), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
@@ -226,20 +230,20 @@ fun SettingsScreen(
                             onClick = { uriHandler.openUri("https://docs.google.com/document/d/1w8yoFZIXWyQD6dbl_l5vyZVtg5GiDRxTke8PuyP76Bo/edit?usp=sharing") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                         ) {
-                            Text(stringResource(R.string.privacy_policy), color = MaterialTheme.colorScheme.onBackground)
+                            Text(stringResource(R.string.privacy_policy), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         OutlinedButton(
                             onClick = { uriHandler.openUri("https://docs.google.com/document/d/1pUGQhJPctMYZ1PHh1znBgcj3lLu2MLaeELSZ3T3O0J8/edit?usp=sharing") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                         ) {
-                            Text(stringResource(R.string.terms_of_service), color = MaterialTheme.colorScheme.onBackground)
+                            Text(stringResource(R.string.terms_of_service), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 },

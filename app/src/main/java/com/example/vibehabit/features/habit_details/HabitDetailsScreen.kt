@@ -94,7 +94,7 @@ fun HabitDetailsScreen(
                 text = habit.name,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 modifier = Modifier.basicMarquee()

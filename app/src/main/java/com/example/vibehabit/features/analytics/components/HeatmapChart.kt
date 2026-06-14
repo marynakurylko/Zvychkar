@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,8 +33,11 @@ fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
 
     val weekDaysLabels = listOf(
         stringResource(R.string.day_mon),
+        stringResource(R.string.day_tue),
         stringResource(R.string.day_wed),
+        stringResource(R.string.day_thu),
         stringResource(R.string.day_fri),
+        stringResource(R.string.day_sat),
         stringResource(R.string.day_sun)
     )
 
@@ -44,18 +50,34 @@ fun HeatmapChart(heatmapData: Map<LocalDate, Int>) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
-            modifier = Modifier.padding(end = 8.dp),
+            modifier = Modifier
+                .width(28.dp)
+                .padding(end = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             for (day in 0..6) {
-                Box(modifier = Modifier.height(14.dp), contentAlignment = Alignment.Center) {
-                    if (day % 2 == 0) {
-                        Text(
-                            text = weekDaysLabels.getOrNull(day / 2) ?: "",
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(14.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Text(
+                        text = weekDaysLabels.getOrNull(day) ?: "",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        style = TextStyle(
+                            lineHeight = 14.sp,
+                            lineHeightStyle = LineHeightStyle(
+                                alignment = LineHeightStyle.Alignment.Center,
+                                trim = LineHeightStyle.Trim.Both
+                            ),
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            )
                         )
-                    }
+                    )
                 }
             }
         }
