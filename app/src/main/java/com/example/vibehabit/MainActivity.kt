@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -16,7 +17,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vibehabit.core.navigation.AppNavigation
 import com.example.vibehabit.core.notifications.NotificationHelper
 import com.example.vibehabit.core.theme.ui.theme.HabitTrackerTheme
@@ -26,36 +26,46 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
+    private val settingsViewModel: SettingsViewModel by viewModels()
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        // Дозвіл отримано або відхилено
+        // Permission result handled here
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        
+        // Hold the splash screen until DataStore has emitted its first value (even if it's null)
+        splashScreen.setKeepOnScreenCondition {
+            !settingsViewModel.isThemeLoaded.value
+        }
+
         enableEdgeToEdge()
         
         NotificationHelper.createNotificationChannel(this)
         checkNotificationPermission()
 
         setContent {
-            val settingsViewModel: SettingsViewModel = viewModel()
-            val storedIsDarkTheme by settingsViewModel.isDarkTheme.collectAsState(initial = null)
-            val systemTheme = isSystemInDarkTheme()
+            val isLoaded by settingsViewModel.isThemeLoaded.collectAsState()
+            val storedIsDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
             
-            val isDarkTheme = storedIsDarkTheme ?: systemTheme
+            if (isLoaded) {
+                // If storedIsDarkTheme is null, we fall back to the system theme
+                val isDarkTheme = storedIsDarkTheme ?: isSystemInDarkTheme()
 
-            HabitTrackerTheme(darkTheme = isDarkTheme) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppNavigation(
-                        isDarkTheme = isDarkTheme,
-                        onThemeChange = { settingsViewModel.toggleTheme(it) }
-                    )
+                HabitTrackerTheme(darkTheme = isDarkTheme) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        AppNavigation(
+                            isDarkTheme = isDarkTheme,
+                            onThemeChange = { settingsViewModel.toggleTheme(it) }
+                        )
+                    }
                 }
             }
         }

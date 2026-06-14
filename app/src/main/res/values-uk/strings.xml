@@ -132,6 +132,8 @@
     <string name="reset_password_title">Відновлення пароля 🔐</string>
     <string name="reset_password_desc">Введіть email, на який зареєстровано ваш акаунт, і ми надішлемо посилання для створення нового пароля.</string>
     <string name="reset_email_sent">✉️ Лист успішно надіслано! Перевірте пошту (і папку Спам).</string>
+    <string name="show_password">Показати пароль</string>
+    <string name="hide_password">Сховати пароль</string>
 
     <!-- Analytics -->
     <string name="analytics_title">Аналітика</string>
@@ -154,6 +156,7 @@
     <string name="calendar_empty_state">Поки порожньо, але це легко виправити, додавши нову звичку! ✨</string>
     <string name="current_streak">Поточна серія</string>
     <string name="best_streak">Рекорд</string>
+    <string name="progress_format">%1$d / %2$d</string>
 
     <!-- ViewModel Strings -->
     <string name="default_username">Користувач</string>

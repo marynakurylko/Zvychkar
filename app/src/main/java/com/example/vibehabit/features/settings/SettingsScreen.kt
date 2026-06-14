@@ -94,7 +94,7 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = Color.Transparent
                 )
             )
         },
@@ -219,6 +219,8 @@ fun SettingsScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Text(AppConstants.APP_NAME, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         Text(stringResource(R.string.app_version, "1.0.0"), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
