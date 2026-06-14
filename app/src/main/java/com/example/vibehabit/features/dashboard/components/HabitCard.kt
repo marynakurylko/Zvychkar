@@ -1,10 +1,14 @@
 package com.example.vibehabit.features.dashboard.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,6 +62,9 @@ fun HabitCard(
         cardColor.copy(alpha = 0.18f).compositeOver(MaterialTheme.colorScheme.surface)
     }
 
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
@@ -105,7 +112,15 @@ fun HabitCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp, start = 12.dp)
-                    .clickable { onCardClick() },
+                    .border(
+                        border = if (isPressed) BorderStroke(2.dp, cardColor) else BorderStroke(0.dp, Color.Transparent),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = LocalIndication.current,
+                        onClick = onCardClick
+                    ),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = containerColor)
             ) {
@@ -172,10 +187,13 @@ fun HabitCard(
                     }
 
                     val progress = (habit.completedDates.size.toFloat() / habit.targetDays).coerceAtMost(1f)
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.size(48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         CircularProgressIndicator(
                             progress = { progress },
-                            modifier = Modifier.size(48.dp),
+                            modifier = Modifier.fillMaxSize(),
                             color = cardColor,
                             trackColor = MaterialTheme.colorScheme.surfaceVariant,
                             strokeWidth = 3.dp,

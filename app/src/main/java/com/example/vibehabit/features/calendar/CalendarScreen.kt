@@ -1,8 +1,13 @@
 package com.example.vibehabit.features.calendar
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -144,21 +149,34 @@ fun CalendarScreen(viewModel: DashboardViewModel) {
                             .getOrDefault(MaterialTheme.colorScheme.surface)
                         val isPastOrToday = !selectedDate.isAfter(LocalDate.now())
 
+                        val interactionSource = remember { MutableInteractionSource() }
+                        val isPressed by interactionSource.collectIsPressedAsState()
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 6.dp)
-                                .let {
-                                    if (isPastOrToday) {
-                                        it.clickable { onToggleCompletion(habit.id, selectedDate.toString()) }
-                                    } else it
-                                }
+                                .defaultMinSize(minHeight = 64.dp)
+                                .clip(RoundedCornerShape(size = 16.dp))
+                                .border(
+                                    border = if (isPressed) BorderStroke(
+                                        0.dp, Color.Transparent
+                                    ) else BorderStroke(0.dp, Color.Transparent),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
                                 .background(
                                     color = if (isCompletedOnSelectedDate) habitColor.copy(alpha = 0.15f)
                                     else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                                     shape = RoundedCornerShape(16.dp)
                                 )
-                                .padding(16.dp),
+                                .clickable(
+                                    interactionSource = interactionSource,
+                                    indication = LocalIndication.current,
+                                    enabled = isPastOrToday
+                                ) {
+                                    onToggleCompletion(habit.id, selectedDate.toString())
+                                }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -168,14 +186,17 @@ fun CalendarScreen(viewModel: DashboardViewModel) {
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1,
-                                modifier = Modifier.weight(1f).basicMarquee().padding(end = 8.dp)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .basicMarquee()
+                                    .padding(end = 8.dp)
                             )
 
                             if (isCompletedOnSelectedDate) {
                                 Box(
                                     modifier = Modifier
                                         .background(habitColor, RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Text(
                                         text = stringResource(R.string.status_completed),
@@ -185,11 +206,17 @@ fun CalendarScreen(viewModel: DashboardViewModel) {
                                     )
                                 }
                             } else {
-                                Text(
-                                    text = if (isPastOrToday) stringResource(R.string.status_missed) else stringResource(R.string.status_waiting),
-                                    color = Color.Gray,
-                                    fontSize = 12.sp
-                                )
+                                Box(
+                                    modifier = Modifier.defaultMinSize(minHeight = 32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = if (isPastOrToday) stringResource(R.string.status_missed) else stringResource(R.string.status_waiting),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                    )
+                                }
                             }
                         }
                     }

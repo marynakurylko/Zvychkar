@@ -133,6 +133,8 @@
     <string name="reset_password_title">Password recovery 🔐</string>
     <string name="reset_password_desc">Enter the email your account is registered with, and we will send a link to create a new password.</string>
     <string name="reset_email_sent">✉️ Email successfully sent! Check your inbox (and Spam folder).</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
 
     <!-- Analytics -->
     <string name="analytics_title">Analytics</string>
