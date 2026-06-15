@@ -1,6 +1,9 @@
 package com.example.vibehabit.core.navigation
 
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -9,7 +12,9 @@ import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -78,72 +83,86 @@ fun AppNavigation(
         else -> DashboardRoute
     }
 
-    val showBottomBar = destination?.run {
-        hasRoute<DashboardRoute>() || hasRoute<CalendarRoute>() || hasRoute<AnalyticsRoute>() || hasRoute<SettingsRoute>()
-    } ?: false
+    var wasBottomBarVisible by rememberSaveable { mutableStateOf(false) }
+    val isCurrentDestinationVisible = destination?.let {
+        it.hasRoute<DashboardRoute>() || it.hasRoute<CalendarRoute>() ||
+                it.hasRoute<AnalyticsRoute>() || it.hasRoute<SettingsRoute>()
+    }
+    if (isCurrentDestinationVisible != null) {
+        wasBottomBarVisible = isCurrentDestinationVisible
+    }
+    val showBottomBar = isCurrentDestinationVisible ?: wasBottomBarVisible
 
     Scaffold(
         bottomBar = {
-            if (showBottomBar && destination != null) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 8.dp
+            if (showBottomBar) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 8.dp,
+                    modifier = Modifier.navigationBarsPadding()
                 ) {
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Home, contentDescription = stringResource(R.string.nav_home_desc)) },
-                        label = { Text(text = stringResource(R.string.nav_habits_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
-                        selected = destination.hasRoute<DashboardRoute>(),
-                        onClick = {
-                            if (!destination.hasRoute<DashboardRoute>()) {
-                                navController.navigate(DashboardRoute) {
-                                    popUpTo(navController.graph.id) { inclusive = true }
+                    NavigationBar(
+                        modifier = Modifier.height(80.dp),
+                        containerColor = Color.Transparent,
+                        tonalElevation = 0.dp,
+                        windowInsets = WindowInsets(0, 0, 0, 0)
+                    ) {
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Filled.Home, contentDescription = stringResource(R.string.nav_home_desc)) },
+                            label = { Text(text = stringResource(R.string.nav_habits_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
+                            selected = destination?.hasRoute<DashboardRoute>() == true,
+                            onClick = {
+                                if (destination?.hasRoute<DashboardRoute>() == false) {
+                                    navController.navigate(DashboardRoute) {
+                                        popUpTo(navController.graph.id) { inclusive = true }
+                                    }
                                 }
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            )
                         )
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.nav_calendar_desc)) },
-                        label = { Text(text = stringResource(R.string.nav_calendar_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
-                        selected = destination.hasRoute<CalendarRoute>(),
-                        onClick = {
-                            if (!destination.hasRoute<CalendarRoute>()) navController.navigate(CalendarRoute)
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.nav_calendar_desc)) },
+                            label = { Text(text = stringResource(R.string.nav_calendar_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
+                            selected = destination?.hasRoute<CalendarRoute>() == true,
+                            onClick = {
+                                if (destination?.hasRoute<CalendarRoute>() == false) navController.navigate(CalendarRoute)
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            )
                         )
-                    )
 
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Filled.PieChart, contentDescription = stringResource(R.string.nav_analytics_desc)) },
-                        label = { Text(text = stringResource(R.string.nav_analytics_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
-                        selected = destination.hasRoute<AnalyticsRoute>(),
-                        onClick = {
-                            if (!destination.hasRoute<AnalyticsRoute>()) navController.navigate(AnalyticsRoute)
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Filled.PieChart, contentDescription = stringResource(R.string.nav_analytics_desc)) },
+                            label = { Text(text = stringResource(R.string.nav_analytics_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
+                            selected = destination?.hasRoute<AnalyticsRoute>() == true,
+                            onClick = {
+                                if (destination?.hasRoute<AnalyticsRoute>() == false) navController.navigate(AnalyticsRoute)
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            )
                         )
-                    )
 
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.nav_settings_desc)) },
-                        label = { Text(text = stringResource(R.string.nav_settings_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
-                        selected = destination.hasRoute<SettingsRoute>(),
-                        onClick = {
-                            if (!destination.hasRoute<SettingsRoute>()) navController.navigate(SettingsRoute)
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.nav_settings_desc)) },
+                            label = { Text(text = stringResource(R.string.nav_settings_label), maxLines = 1, modifier = Modifier.basicMarquee()) },
+                            selected = destination?.hasRoute<SettingsRoute>() == true,
+                            onClick = {
+                                if (destination?.hasRoute<SettingsRoute>() == false) navController.navigate(SettingsRoute)
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

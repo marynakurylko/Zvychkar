@@ -52,12 +52,14 @@ fun CalendarScreen(viewModel: DashboardViewModel) {
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
         ) {
             Box(
                 modifier = Modifier
