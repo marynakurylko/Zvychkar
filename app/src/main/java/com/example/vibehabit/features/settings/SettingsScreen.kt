@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.vibehabit.features.auth.AuthViewModel
 import com.example.vibehabit.features.dashboard.DashboardViewModel
 import com.example.vibehabit.core.utils.AppConstants
+import com.example.vibehabit.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -222,7 +223,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(AppConstants.APP_NAME, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        Text(stringResource(R.string.app_version, "1.0.0"), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.app_version, BuildConfig.VERSION_NAME), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                         Spacer(modifier = Modifier.height(24.dp))
 
