@@ -6,10 +6,13 @@ import com.example.vibehabit.core.models.Habit
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,6 +21,8 @@ class HabitRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val firestore: FirebaseFirestore
 ) {
+    private val TIMEOUT_MS = 3000L
+
     fun getHabitsFlow(userId: String): Flow<List<Habit>> = callbackFlow {
         if (userId.isBlank()) {
             close(Exception(context.getString(R.string.error_not_authorized)))
@@ -59,45 +64,75 @@ class HabitRepository @Inject constructor(
         awaitClose { subscription.remove() }
     }
 
-    suspend fun updateHabitDates(userId: String, habitId: String, newDates: List<String>): Result<Unit> = runCatching {
-        firestore.collection("users").document(userId).collection("habits").document(habitId)
-            .update("completedDates", newDates).await()
-    }
-
-    suspend fun updateHabitFavorite(userId: String, habitId: String, isFavorite: Boolean): Result<Unit> = runCatching {
-        firestore.collection("users").document(userId).collection("habits").document(habitId)
-            .update("isFavorite", isFavorite).await()
-    }
-
-    suspend fun saveHabit(userId: String, habit: Habit): Result<Unit> = runCatching {
-        firestore.collection("users").document(userId).collection("habits").document(habit.id)
-            .set(habit).await()
-    }
-
-    suspend fun deleteHabit(userId: String, habitId: String): Result<Unit> = runCatching {
-        firestore.collection("users").document(userId).collection("habits").document(habitId)
-            .delete().await()
-    }
-
-    suspend fun deleteAllUserData(userId: String): Result<Unit> = runCatching {
-        val habitsRef = firestore.collection("users").document(userId).collection("habits")
-        val snapshot = habitsRef.get().await()
-        val batch = firestore.batch()
-
-        for (doc in snapshot.documents) {
-            batch.delete(doc.reference)
+    suspend fun updateHabitDates(userId: String, habitId: String, newDates: List<String>): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            withTimeoutOrNull(TIMEOUT_MS) {
+                firestore.collection("users").document(userId).collection("habits").document(habitId)
+                    .update("completedDates", newDates).await()
+            }
+            Unit // Return Success even if timeout, as Firestore will sync in background
         }
-        batch.delete(firestore.collection("users").document(userId))
-        batch.commit().await()
     }
 
-    suspend fun sendFeedback(userId: String, email: String, message: String): Result<Unit> = runCatching {
-        val feedbackData = hashMapOf(
-            "userId" to userId,
-            "email" to email,
-            "message" to message,
-            "timestamp" to FieldValue.serverTimestamp()
-        )
-        firestore.collection("feedback").add(feedbackData).await()
+    suspend fun updateHabitFavorite(userId: String, habitId: String, isFavorite: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            withTimeoutOrNull(TIMEOUT_MS) {
+                firestore.collection("users").document(userId).collection("habits").document(habitId)
+                    .update("isFavorite", isFavorite).await()
+            }
+            Unit
+        }
+    }
+
+    suspend fun saveHabit(userId: String, habit: Habit): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            withTimeoutOrNull(TIMEOUT_MS) {
+                firestore.collection("users").document(userId).collection("habits").document(habit.id)
+                    .set(habit).await()
+            }
+            Unit
+        }
+    }
+
+    suspend fun deleteHabit(userId: String, habitId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            withTimeoutOrNull(TIMEOUT_MS) {
+                firestore.collection("users").document(userId).collection("habits").document(habitId)
+                    .delete().await()
+            }
+            Unit
+        }
+    }
+
+    suspend fun deleteAllUserData(userId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val habitsRef = firestore.collection("users").document(userId).collection("habits")
+            val snapshot = withTimeoutOrNull(TIMEOUT_MS) { habitsRef.get().await() }
+                ?: throw Exception("Timeout fetching data for deletion")
+            
+            val batch = firestore.batch()
+            for (doc in snapshot.documents) {
+                batch.delete(doc.reference)
+            }
+            batch.delete(firestore.collection("users").document(userId))
+            
+            withTimeoutOrNull(TIMEOUT_MS) { batch.commit().await() }
+            Unit
+        }
+    }
+
+    suspend fun sendFeedback(userId: String, email: String, message: String): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val feedbackData = hashMapOf(
+                "userId" to userId,
+                "email" to email,
+                "message" to message,
+                "timestamp" to FieldValue.serverTimestamp()
+            )
+            withTimeoutOrNull(TIMEOUT_MS) {
+                firestore.collection("feedback").add(feedbackData).await()
+            }
+            Unit
+        }
     }
 }

@@ -5,8 +5,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,13 +27,13 @@ class UserPreferencesRepository @Inject constructor(
         preferences[USERNAME_KEY]
     }
 
-    suspend fun completeOnboarding() {
+    suspend fun completeOnboarding() = withContext(Dispatchers.IO) {
         dataStore.edit { preferences ->
             preferences[ONBOARDING_KEY] = true
         }
     }
 
-    suspend fun updateUsername(newName: String) {
+    suspend fun updateUsername(newName: String) = withContext(Dispatchers.IO) {
         dataStore.edit { preferences ->
             preferences[USERNAME_KEY] = newName
         }

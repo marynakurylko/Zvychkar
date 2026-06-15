@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 val Context.settingsDataStore by preferencesDataStore(name = "settings_prefs")
@@ -49,8 +51,10 @@ class SettingsViewModel @Inject constructor(application: Application) : AndroidV
 
     fun toggleTheme(isDark: Boolean) {
         viewModelScope.launch {
-            dataStore.edit { preferences ->
-                preferences[DARK_THEME_KEY] = isDark
+            withContext(Dispatchers.IO) {
+                dataStore.edit { preferences ->
+                    preferences[DARK_THEME_KEY] = isDark
+                }
             }
         }
     }
