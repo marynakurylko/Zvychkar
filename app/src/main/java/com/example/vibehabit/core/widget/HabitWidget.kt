@@ -35,10 +35,13 @@ import com.example.vibehabit.R
 import com.example.vibehabit.core.utils.AppConstants
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.awaitCancellation
 import java.time.LocalDate
 
 val HABIT_ID_KEY = ActionParameters.Key<String>("habit_id")
+val IS_COMPLETED_KEY = ActionParameters.Key<Boolean>("is_completed")
 
 class HabitWidget : GlanceAppWidget() {
 
@@ -50,7 +53,7 @@ class HabitWidget : GlanceAppWidget() {
 
             LaunchedEffect(currentUser) {
                 if (currentUser != null) {
-                    FirebaseFirestore.getInstance().collection("users")
+                    val registration = FirebaseFirestore.getInstance().collection("users")
                         .document(currentUser.uid)
                         .collection("habits")
                         .addSnapshotListener { snapshot, _ ->
@@ -75,6 +78,11 @@ class HabitWidget : GlanceAppWidget() {
                                 }.sortedBy { it.id }
                             }
                         }
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        registration.remove()
+                    }
                 } else {
                     habits = emptyList()
                 }
@@ -112,7 +120,10 @@ class HabitWidget : GlanceAppWidget() {
                         items(habits) { habit ->
                             val isCompletedToday = habit.completedDates.contains(todayStr)
                             val toggleAction = actionRunCallback<ToggleHabitAction>(
-                                actionParametersOf(HABIT_ID_KEY to habit.id)
+                                actionParametersOf(
+                                    HABIT_ID_KEY to habit.id,
+                                    IS_COMPLETED_KEY to isCompletedToday
+                                )
                             )
 
                             Row(
@@ -153,6 +164,7 @@ class HabitWidget : GlanceAppWidget() {
 class ToggleHabitAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val habitId = parameters[HABIT_ID_KEY] ?: return
+        val isCompleted = parameters[IS_COMPLETED_KEY] ?: return
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val todayStr = LocalDate.now().toString()
         val firestore = FirebaseFirestore.getInstance()
@@ -161,28 +173,13 @@ class ToggleHabitAction : ActionCallback {
             .collection("habits").document(habitId)
 
         try {
-            val docSnapshot = Tasks.await(docRef.get())
-            val habit = try {
-                docSnapshot.toObject(Habit::class.java)?.copy(id = docSnapshot.id)
-            } catch (e: Exception) {
-                val data = docSnapshot.data ?: return
-                Habit(
-                    id = docSnapshot.id,
-                    name = data["name"]?.toString() ?: "",
-                    isFavorite = data["isFavorite"] as? Boolean ?: false,
-                    colorHex = data["colorHex"]?.toString() ?: "",
-                    completedDates = (data["completedDates"] as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList(),
-                    targetDays = (data["targetDays"] as? Number)?.toInt() ?: 7,
-                    iconName = data["iconName"]?.toString() ?: "Bolt",
-                    frequency = data["frequency"]?.toString() ?: "Daily",
-                    reminderTime = data["reminderTime"]?.toString()
-                )
-            } ?: return
+            val update = if (isCompleted) {
+                FieldValue.arrayRemove(todayStr)
+            } else {
+                FieldValue.arrayUnion(todayStr)
+            }
 
-            val newDates = habit.completedDates.toMutableList()
-            if (newDates.contains(todayStr)) newDates.remove(todayStr) else newDates.add(todayStr)
-
-            Tasks.await(docRef.update("completedDates", newDates))
+            Tasks.await(docRef.update("completedDates", update))
             HabitWidget().updateAll(context)
         } catch (e: Exception) {
             e.printStackTrace()
