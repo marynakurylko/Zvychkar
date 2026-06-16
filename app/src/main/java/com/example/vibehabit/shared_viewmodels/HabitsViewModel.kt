@@ -124,6 +124,7 @@ class HabitsViewModel @Inject constructor(
         val newDates = habit.completedDates.toMutableList()
         if (newDates.contains(dateStr)) newDates.remove(dateStr) else newDates.add(dateStr)
 
+        // Optimistic UI: HabitRepository.updateHabitDates now returns immediately on timeout
         viewModelScope.launch {
             habitRepository.updateHabitDates(userId, habitId, newDates)
         }
@@ -156,8 +157,13 @@ class HabitsViewModel @Inject constructor(
         viewModelScope.launch {
             val email = user.email ?: getApplication<Application>().getString(R.string.no_email_provided)
             habitRepository.sendFeedback(user.uid, email, message)
-                .onSuccess { onSuccess() }
-                .onFailure { e -> onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_feedback_send)) }
+                .onSuccess { 
+                    // This will now be called even if offline (after 3s timeout)
+                    onSuccess() 
+                }
+                .onFailure { e -> 
+                    onError(e.localizedMessage ?: getApplication<Application>().getString(R.string.error_feedback_send)) 
+                }
         }
     }
 }

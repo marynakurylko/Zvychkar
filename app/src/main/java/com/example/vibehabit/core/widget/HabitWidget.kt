@@ -33,7 +33,6 @@ import androidx.glance.text.TextDecoration
 import com.example.vibehabit.core.models.Habit
 import com.example.vibehabit.R
 import com.example.vibehabit.core.utils.AppConstants
-import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -172,17 +171,18 @@ class ToggleHabitAction : ActionCallback {
         val docRef = firestore.collection("users").document(currentUser.uid)
             .collection("habits").document(habitId)
 
-        try {
-            val update = if (isCompleted) {
-                FieldValue.arrayRemove(todayStr)
-            } else {
-                FieldValue.arrayUnion(todayStr)
-            }
-
-            Tasks.await(docRef.update("completedDates", update))
-            HabitWidget().updateAll(context)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val update = if (isCompleted) {
+            FieldValue.arrayRemove(todayStr)
+        } else {
+            FieldValue.arrayUnion(todayStr)
         }
+
+        // Optimistic UI Update: Firestore updates local cache immediately.
+        // The SDK handles background synchronization automatically when online.
+        docRef.update("completedDates", update)
+            .addOnFailureListener { it.printStackTrace() }
+
+        // Trigger an instant widget redraw using the new local state.
+        HabitWidget().updateAll(context)
     }
 }
